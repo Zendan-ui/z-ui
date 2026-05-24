@@ -1,0 +1,85 @@
+version: '3.9'
+
+services:
+  z-ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: z-ui
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+      - "443:443"
+      - "80:80"
+    volumes:
+      - z-ui-data:/app/data
+      - z-ui-certs:/app/data/certs
+    environment:
+      - ZUI_HOST=0.0.0.0
+      - ZUI_PORT=8443
+      - ZUI_DB_TYPE=postgres
+      - ZUI_DB_HOST=postgres
+      - ZUI_DB_PORT=5432
+      - ZUI_DB_NAME=zui
+      - ZUI_DB_USER=zui
+      - ZUI_DB_PASS=${DB_PASSWORD:-changeme}
+      - ZUI_REDIS_URL=redis://redis:6379
+      - ZUI_JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - ZUI_ADMIN_USER=${ADMIN_USER:-admin}
+      - ZUI_ADMIN_PASS=${ADMIN_PASS:-admin}
+      - ZUI_TELEGRAM_ENABLED=${TELEGRAM_ENABLED:-false}
+      - ZUI_TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
+      - ZUI_TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-0}
+      - ZUI_DEBUG=${DEBUG:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - z-ui-net
+    cap_add:
+      - NET_ADMIN
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: z-ui-postgres
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=zui
+      - POSTGRES_USER=zui
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zui"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - z-ui-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: z-ui-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - z-ui-net
+
+volumes:
+  z-ui-data:
+  z-ui-certs:
+  postgres-data:
+  redis-data:
+
+networks:
+  z-ui-net:
+    driver: bridge
