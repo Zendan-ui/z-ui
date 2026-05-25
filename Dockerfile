@@ -1,79 +1,56 @@
 # Z-UI Dockerfile
-# github.com/Zendan-ui/z-ui | @Zendan_Ui
-
-# ── Build Backend ──
 FROM golang:1.22-alpine AS backend
-RUN apk add --no-cache git gcc musl-dev libc-dev
+RUN apk add --no-cache git gcc musl-dev
 WORKDIR /src
-COPY backend/go.mod ./
-RUN go mod download 2>/dev/null || go mod tidy && go mod download
 COPY backend/ .
-ARG TARGETARCH=amd64
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} \
+RUN go mod tidy && CGO_ENABLED=1 GOOS=linux \
     go build -tags "musl" -ldflags="-s -w" -o /z-ui ./cmd/server
 
-# ── Build Frontend ──
 FROM node:20-alpine AS frontend
 WORKDIR /src
 COPY frontend/package.json ./
-COPY frontend/package-lock.json* ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps 2>/dev/null || npm install
 COPY frontend/ .
 RUN npm run build
 
-# ── Final ──
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates curl wget unzip bash jq iptables ip6tables libgcc libstdc++
-
-ARG TARGETARCH=amd64
+RUN apk add --no-cache ca-certificates curl wget unzip bash jq iptables libgcc
 
 # Xray
 RUN set -ex && \
     VER=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name) && \
-    case "${TARGETARCH}" in amd64)A="64";;arm64)A="arm64-v8a";;*)A="64";;esac && \
-    wget -qO /tmp/x.zip "https://github.com/XTLS/Xray-core/releases/download/${VER}/Xray-linux-${A}.zip" && \
-    unzip -o /tmp/x.zip -d /usr/local/bin/ xray geoip.dat geosite.dat 2>/dev/null && \
-    chmod +x /usr/local/bin/xray && rm -f /tmp/x.zip
+    wget -qO /tmp/x.zip "https://github.com/XTLS/Xray-core/releases/download/${VER}/Xray-linux-64.zip" && \
+    unzip -o /tmp/x.zip -d /usr/local/bin/ xray geoip.dat geosite.dat 2>/dev/null; \
+    chmod +x /usr/local/bin/xray 2>/dev/null; rm -f /tmp/x.zip
 
 # Sing-box
 RUN set -ex && \
     VER=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/v//') && \
-    case "${TARGETARCH}" in amd64)A="amd64";;arm64)A="arm64";;*)A="amd64";;esac && \
-    wget -qO /tmp/sb.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${VER}/sing-box-${VER}-linux-${A}.tar.gz" && \
-    tar -xzf /tmp/sb.tar.gz -C /tmp/ && mv /tmp/sing-box-*/sing-box /usr/local/bin/ && \
-    chmod +x /usr/local/bin/sing-box && rm -rf /tmp/sb* /tmp/sing-box*
+    wget -qO /tmp/sb.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${VER}/sing-box-${VER}-linux-amd64.tar.gz" && \
+    tar -xzf /tmp/sb.tar.gz -C /tmp/ && mv /tmp/sing-box-*/sing-box /usr/local/bin/ 2>/dev/null; \
+    chmod +x /usr/local/bin/sing-box 2>/dev/null; rm -rf /tmp/sb* /tmp/sing-box*
 
 # GeoIP
 RUN mkdir -p /usr/local/share/xray && \
-    wget -qO /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" && \
-    wget -qO /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+    wget -qO /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" 2>/dev/null; \
+    wget -qO /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" 2>/dev/null; true
 
 WORKDIR /app
 COPY --from=backend /z-ui .
-COPY --from=frontend /src/out ./frontend/out/
+COPY --from=frontend /src/out ./frontend/out/ 
 COPY configs/ ./configs/
 COPY scripts/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh && mkdir -p /var/lib/z-ui/{db,xray,singbox,certs,backups,logs,geo}
 
-# Data dirs (also created at runtime by entrypoint)
-RUN mkdir -p /var/lib/z-ui/{db,xray,singbox,certs,backups,logs,geo}
-
-ENV ZUI_HOST=0.0.0.0 \
-    ZUI_PORT=8443 \
-    ZUI_DB_TYPE=sqlite \
+ENV ZUI_HOST=0.0.0.0 ZUI_PORT=8443 ZUI_DB_TYPE=sqlite \
     ZUI_DB_SQLITE=/var/lib/z-ui/db/z-ui.db \
     ZUI_XRAY_PATH=/usr/local/bin/xray \
     ZUI_XRAY_CONFIG=/var/lib/z-ui/xray/config.json \
     ZUI_XRAY_ASSETS=/usr/local/share/xray \
-    ZUI_XRAY_API_PORT=10085 \
-    ZUI_SINGBOX_PATH=/usr/local/bin/sing-box \
-    ZUI_DEFAULT_THEME=amoled
+    ZUI_XRAY_API_PORT=10085 ZUI_DEFAULT_THEME=amoled
 
 EXPOSE 8443
 VOLUME ["/var/lib/z-ui"]
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -sf http://127.0.0.1:${ZUI_PORT}/health || exit 1
-
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s CMD curl -sf http://127.0.0.1:${ZUI_PORT}/health || exit 1
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["./z-ui"]
