@@ -1,3 +1,3 @@
 module github.com/Zendan-ui/z-ui
 
-go 1.22.0
+go 1.24.0
