@@ -19,26 +19,26 @@ func Setup(app *fiber.App, authSvc *auth.AuthService, subSvc *subscription.Subsc
 	inboundHandler := handlers.NewInboundHandler()
 	subHandler := handlers.NewSubscriptionHandler(subSvc)
 	systemHandler := handlers.NewSystemHandler()
+	tunnelHandler := handlers.NewTunnelHandler()
 
 	// ==================== Public Routes ====================
-	
-	// Health check
+
 	app.Get("/health", systemHandler.Health)
 
-	// Subscription endpoints (public, no auth)
+	// Subscription (public)
 	sub := app.Group("/sub")
 	sub.Get("/:token", subHandler.Serve)
 	sub.Get("/s/:short", subHandler.ServeShort)
 
-	// ==================== Auth Routes ====================
-	
+	// ==================== Auth ====================
+
 	authGroup := app.Group("/api/v1/auth")
 	authGroup.Use(middleware.RateLimiter(10, time.Minute))
 	authGroup.Post("/login", authHandler.Login)
 	authGroup.Post("/refresh", authHandler.RefreshToken)
 
-	// ==================== Protected API Routes ====================
-	
+	// ==================== Protected API ====================
+
 	api := app.Group("/api/v1", middleware.JWTAuth(authSvc), middleware.AuditLog())
 
 	// Auth
@@ -84,7 +84,16 @@ func Setup(app *fiber.App, authSvc *auth.AuthService, subSvc *subscription.Subsc
 	inbounds.Delete("/:id", middleware.RequireRole("superadmin", "admin"), inboundHandler.Delete)
 	inbounds.Post("/:id/toggle", middleware.RequireRole("superadmin", "admin"), inboundHandler.Toggle)
 
-	// Subscriptions (admin management)
+	// Tunnels
+	tunnels := api.Group("/tunnels")
+	tunnels.Get("/", tunnelHandler.List)
+	tunnels.Get("/:id", tunnelHandler.Get)
+	tunnels.Post("/", middleware.RequireRole("superadmin", "admin"), tunnelHandler.Create)
+	tunnels.Put("/:id", middleware.RequireRole("superadmin", "admin"), tunnelHandler.Update)
+	tunnels.Delete("/:id", middleware.RequireRole("superadmin", "admin"), tunnelHandler.Delete)
+	tunnels.Post("/:id/toggle", middleware.RequireRole("superadmin", "admin"), tunnelHandler.Toggle)
+
+	// Subscriptions
 	subs := api.Group("/subscriptions")
 	subs.Get("/", subHandler.List)
 	subs.Get("/:id", subHandler.Get)
@@ -101,11 +110,11 @@ func Setup(app *fiber.App, authSvc *auth.AuthService, subSvc *subscription.Subsc
 	system.Get("/audit-logs", systemHandler.GetAuditLogs)
 
 	// ==================== WebSocket ====================
-	
+
 	app.Get("/ws", ws.HandleWebSocket(ws.MainHub))
 
-	// ==================== Public API (API Key auth) ====================
-	
+	// ==================== Public API ====================
+
 	publicAPI := app.Group("/public/api/v1", middleware.APIKeyAuth())
 	publicAPI.Get("/users", userHandler.List)
 	publicAPI.Get("/users/:id", userHandler.Get)

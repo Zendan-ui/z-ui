@@ -1,28 +1,39 @@
-version: '3.9'
+# ╔══════════════════════════════════════════════════════════╗
+# ║  Z-UI Docker Compose                                    ║
+# ║  github.com/Zendan-ui/z-ui | @Zendan_Ui                 ║
+# ╚══════════════════════════════════════════════════════════╝
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f
+#   docker compose down
+#
 
 services:
   z-ui:
     build:
       context: .
-      dockerfile: docker/Dockerfile
+      # FIX #3: Use root Dockerfile so `docker compose up` works from project root
+      # Both ./Dockerfile and ./docker/Dockerfile are now in sync
+      dockerfile: Dockerfile
     container_name: z-ui
     restart: unless-stopped
     ports:
-      - "8443:8443"
+      - "${ZUI_PORT:-8443}:${ZUI_PORT:-8443}"
       - "443:443"
       - "80:80"
     volumes:
-      - z-ui-data:/app/data
-      - z-ui-certs:/app/data/certs
+      - z-ui-data:/var/lib/z-ui
     environment:
       - ZUI_HOST=0.0.0.0
-      - ZUI_PORT=8443
-      - ZUI_DB_TYPE=postgres
+      - ZUI_PORT=${ZUI_PORT:-8443}
+      - ZUI_DB_TYPE=${ZUI_DB_TYPE:-postgres}
       - ZUI_DB_HOST=postgres
       - ZUI_DB_PORT=5432
       - ZUI_DB_NAME=zui
       - ZUI_DB_USER=zui
       - ZUI_DB_PASS=${DB_PASSWORD:-changeme}
+      - ZUI_DB_SQLITE=/var/lib/z-ui/db/z-ui.db
       - ZUI_REDIS_URL=redis://redis:6379
       - ZUI_JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - ZUI_ADMIN_USER=${ADMIN_USER:-admin}
@@ -31,6 +42,7 @@ services:
       - ZUI_TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
       - ZUI_TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-0}
       - ZUI_DEBUG=${DEBUG:-false}
+      - ZUI_DEFAULT_THEME=${ZUI_DEFAULT_THEME:-amoled}
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,6 +52,12 @@ services:
       - z-ui-net
     cap_add:
       - NET_ADMIN
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:${ZUI_PORT:-8443}/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
 
   postgres:
     image: postgres:16-alpine
@@ -76,7 +94,6 @@ services:
 
 volumes:
   z-ui-data:
-  z-ui-certs:
   postgres-data:
   redis-data:
 

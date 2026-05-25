@@ -442,7 +442,7 @@ cmd_xray() {
   esac
 }
 
-# ─── SSL (Let's Encrypt) ───
+# ─── SSL (LetsEncrypt) ───
 cmd_ssl() {
   case "${1:-}" in
     issue)

@@ -1,207 +1,204 @@
-# راه‌اندازی Z-UI
+# نصب و راه‌اندازی Z-UI
 
-## نصب سریع (پیشنهادی)
+## نصب سریع
 
-### نکات قبل از نصب
-
-با اجرای دستور نصب سریع:
-
-- داکر بر روی ماشین شما نصب خواهد شد و Z-UI به کمک داکر اجرا خواهد شد.
-- دستور `z-ui` بر روی ماشین شما در دسترس خواهد بود.
-- داده‌های Z-UI در مسیر `/var/lib/z-ui` ذخیره خواهند شد.
-- فایل‌های اپلیکیشن Z-UI (`docker-compose.yml` و `.env`) در مسیر `/opt/z-ui` ذخیره خواهند شد.
-
-ابتدا دستور زیر را اجرا کنید:
+دستور زیر را اجرا کنید:
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
 ```
 
-### بعد از نصب
+### پس از نصب
 
-- لاگ‌های Z-UI نمایش داده خواهد شد که با فشردن `Ctrl+C` می‌توانید آن را متوقف کنید.
-- داشبورد به صورت پیش‌فرض روی پورت ۸۴۴۳ اجرا خواهد شد.
-- آدرس داشبورد: `http://YOUR_SERVER_IP:8443/dashboard/`
+- داکر نصب و Z-UI به کمک داکر اجرا می‌شود.
+- دستور `z-ui` در دسترس خواهد بود.
+- داده‌ها در `/var/lib/z-ui` ذخیره می‌شوند.
+- فایل‌های اپلیکیشن در `/opt/z-ui` قرار می‌گیرند.
+- داشبورد روی پورت ۸۴۴۳ اجرا می‌شود.
 
-در مرحله بعد، می‌توانید با اجرای دستور زیر یک ادمین سودو (مدیر کل) بسازید:
+ساخت ادمین:
 
 ```bash
 z-ui admin create --sudo
 ```
 
-### لیست کامل دستورات CLI
+## دستورات CLI
 
 ```bash
 z-ui help
 ```
 
-خروجی:
+### مدیریت پنل
 
+```bash
+z-ui start           # شروع
+z-ui stop            # توقف
+z-ui restart         # ری‌استارت
+z-ui status          # وضعیت + اطلاعات سیستم
+z-ui logs            # مشاهده لاگ
+z-ui update          # بروزرسانی
+z-ui info            # آدرس پنل
 ```
-  Z-UI — The Future of Proxy Management
-  github.com/Zendan-ui/z-ui | @Zendan_Ui
 
-  USAGE:
-    z-ui <command> [args...]
+### مدیریت ادمین
 
-  CORE:
-    start                       Start Z-UI
-    stop                        Stop Z-UI
-    restart                     Restart Z-UI
-    status                      Show status
-    logs [lines]                View logs (default: 100)
-    update                      Update to latest version
-    info                        Show panel URL & info
+```bash
+z-ui admin create --sudo    # ساخت ادمین
+z-ui admin list             # لیست ادمین‌ها
+z-ui admin delete <name>    # حذف ادمین
+```
 
-  ADMIN:
-    admin create [--sudo]       Create admin account
-    admin list                  List admins
-    admin delete <username>     Delete admin
+### مدیریت کاربران
 
-  USER:
-    user create                 Create user (interactive)
-    user list                   List users
-    user delete <username>      Delete user
-    user suspend <username>     Suspend user
-    user activate <username>    Activate user
-    user reset-traffic <user>   Reset user traffic
-
-  CONFIG:
-    config edit                 Edit .env file
-    config show                 Show config (masked)
-    config set KEY VALUE        Set config value
-    config get KEY              Get config value
-
-  XRAY:
-    xray restart                Restart Xray-core
-    xray version                Show Xray version
-    xray config                 Show Xray config
-    xray update                 Update Xray-core
-
-  SSL:
-    ssl issue [domain]          Issue Let's Encrypt cert
-    ssl renew                   Renew certificates
-
-  DATA:
-    backup                      Create backup
-    restore <file>              Restore from backup
-
-  SYSTEM:
-    uninstall                   Uninstall Z-UI
-    completion install          Install bash completion
-    help                        Show this help
-    version                     Show version
+```bash
+z-ui user create              # ساخت کاربر (اینتراکتیو)
+z-ui user list                # لیست کاربران
+z-ui user delete <name>       # حذف کاربر
+z-ui user suspend <name>      # تعلیق
+z-ui user activate <name>     # فعال‌سازی
+z-ui user reset-traffic <name> # ریست ترافیک
 ```
 
 ### تنظیمات
 
-برای تغییر تنظیمات:
-
 ```bash
-# ویرایش مستقیم فایل
-z-ui config edit
-
-# یا با nano
-nano /opt/z-ui/.env
-
-# مشاهده تنظیمات فعلی (رمزها مخفی)
-z-ui config show
-
-# تنظیم یک مقدار خاص
-z-ui config set ZUI_PORT 443
-
-# خواندن یک مقدار
-z-ui config get ZUI_PORT
+z-ui config edit          # ویرایش
+z-ui config show          # نمایش (رمزها مخفی)
+z-ui config set KEY VAL   # تنظیم
+z-ui config get KEY       # خواندن
+z-ui config reset-password # ریست رمز ادمین
+z-ui config set-port      # تغییر پورت
 ```
 
-بعد از تغییر تنظیمات، ری‌استارت کنید:
+### Xray
 
 ```bash
-z-ui restart
+z-ui xray restart    # ری‌استارت
+z-ui xray version    # نسخه
+z-ui xray config     # نمایش کانفیگ
+z-ui xray update     # بروزرسانی
 ```
 
-### SSL / HTTPS
+### SSL / شبکه
 
 ```bash
-# صدور گواهی SSL با Let's Encrypt
-z-ui ssl issue yourdomain.com
-
-# تمدید خودکار
-z-ui ssl renew
+z-ui ssl issue <domain>   # صدور گواهی
+z-ui ssl renew             # تمدید
+z-ui bbr                   # فعال‌سازی BBR
+z-ui warp                  # نصب WARP
+z-ui speedtest             # تست سرعت
+z-ui geo-update            # بروزرسانی GeoIP
 ```
 
-### بکاپ و ریستور
+### فایروال
 
 ```bash
-# ساخت بکاپ
-z-ui backup
-
-# ریستور از بکاپ
-z-ui restore /var/lib/z-ui/backups/z-ui-backup-manual-20260524.tar.gz
+z-ui firewall status     # وضعیت
+z-ui firewall open 443   # باز کردن پورت
+z-ui firewall enable     # فعال‌سازی
+z-ui firewall disable    # غیرفعال‌سازی
 ```
 
-### آپدیت
+### پشتیبان‌گیری
 
 ```bash
-z-ui update
+z-ui backup              # ساخت پشتیبان
+z-ui restore <file>      # بازگردانی
 ```
 
-### حذف کامل
+### سایر
 
 ```bash
-z-ui uninstall
+z-ui health              # بررسی سلامت
+z-ui completion install  # نصب autocomplete
+z-ui uninstall           # حذف
+z-ui                     # منوی اینتراکتیو
 ```
 
----
+## منوی اینتراکتیو
 
-## نصب دستی (پیشرفته)
+با اجرای `z-ui` بدون آرگومان، منوی عددی نمایش داده می‌شود:
 
-### ⚠ توجه
-
-نصب Z-UI به صورت دستی فقط به افراد حرفه‌ای پیشنهاد می‌شود.
-
-### پیش‌نیازها
-
-- Go 1.22+
-- Node.js 20+
-- Xray-core
-- Git
-
-### نصب Xray
-
-```bash
-bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
+```
+  Z-UI Panel Management — @Zendan_Ui
+  0.  Exit
+  ─────────
+  1.  Update Z-UI
+  2.  Start
+  3.  Stop
+  4.  Restart
+  5.  Status
+  6.  Logs
+  ─────────
+  7.  Create Admin
+  8.  Create User
+  9.  Reset Password
+  10. Change Port
+  11. View Config
+  ─────────
+  12. Enable BBR
+  13. Issue SSL
+  14. Update Geo Files
+  15. Firewall Menu
+  16. Install WARP
+  17. Speedtest
+  ─────────
+  18. Backup
+  19. Update Xray
+  20. Health Check
+  21. System Info
+  22. Uninstall
 ```
 
-### کلون و بیلد
+## نصب با Docker Compose
 
 ```bash
 git clone https://github.com/Zendan-ui/z-ui.git
 cd z-ui
-
-# Backend
-cd backend && go build -o ../bin/z-ui ./cmd/server && cd ..
-
-# Frontend
-cd frontend && npm ci && npm run build && cd ..
+cp .env.example .env
+nano .env
+docker compose up -d
 ```
 
-### اجرا
+## نصب دستی
+
+پیش‌نیازها: Go 1.22+, Node.js 20+, Xray-core
 
 ```bash
-cp .env.example .env
-nano .env          # تنظیمات خود را وارد کنید
+# نصب Xray
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install
 
+# کلون پروژه
+git clone https://github.com/Zendan-ui/z-ui.git
+cd z-ui
+
+# بیلد بکاند
+cd backend && go build -tags musl -o ../bin/z-ui ./cmd/server && cd ..
+
+# بیلد فرانت‌اند
+cd frontend && npm install && npm run build && cd ..
+
+# اجرا
+cp .env.example .env
+nano .env
 ./bin/z-ui
 ```
 
-Z-UI به طور پیش‌فرض روی پورت ۸۴۴۳ اجرا خواهد شد.
+## متغیرهای محیطی
 
----
+فایل `.env` را ویرایش کنید:
+
+| متغیر | پیش‌فرض | توضیح |
+|---|---|---|
+| `ZUI_PORT` | 8443 | پورت پنل |
+| `ZUI_DB_TYPE` | sqlite | نوع دیتابیس |
+| `ZUI_ADMIN_USER` | admin | نام ادمین |
+| `ZUI_ADMIN_PASS` | admin | رمز ادمین |
+| `ZUI_TELEGRAM_ENABLED` | false | فعال‌سازی بات |
+| `ZUI_TELEGRAM_TOKEN` | | توکن بات |
+| `ZUI_DEFAULT_THEME` | amoled | تم پیش‌فرض |
 
 ## پشتیبانی
 
 - GitHub: [github.com/Zendan-ui/z-ui](https://github.com/Zendan-ui/z-ui)
 - Telegram: [@Zendan_Ui](https://t.me/Zendan_Ui)
-
-**Z-UI — The Future of Proxy Management** 🚀

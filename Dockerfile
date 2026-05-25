@@ -1,3 +1,8 @@
+# FIX #3: Root-level Dockerfile — symlink to docker/Dockerfile
+# This file exists so that both `docker build .` and 
+# `docker build -f docker/Dockerfile .` work correctly.
+# The actual Dockerfile is in docker/Dockerfile
+
 # ╔══════════════════════════════════════════════════════════╗
 # ║  Z-UI Dockerfile — Multi-stage, Multi-arch              ║
 # ║  github.com/Zendan-ui/z-ui | @Zendan_Ui                 ║
@@ -6,20 +11,14 @@
 # ==================== Build Backend ====================
 FROM golang:1.22-alpine AS backend-builder
 
-# FIX #2: Install musl-dev + build dependencies for CGO/SQLite on Alpine
 RUN apk add --no-cache git gcc musl-dev libc-dev
 
 WORKDIR /build
-
-# Copy go.mod first (go.sum may or may not exist yet)
 COPY backend/go.mod ./
-# Generate go.sum if missing, then download deps
 RUN go mod download 2>/dev/null || go mod tidy && go mod download
 
 COPY backend/ .
 
-# FIX #2: Add -tags "musl" to fix pread64/pwrite64 errors on Alpine
-# This tells go-sqlite3 to use musl-compatible syscalls
 ARG TARGETARCH=amd64
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} \
     go build -tags "musl" -ldflags="-s -w -X main.Version=1.0.0" \
@@ -29,19 +28,11 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} \
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /build
-
 COPY frontend/package.json ./
-# If package-lock.json exists, copy it too
 COPY frontend/package-lock.json* ./
-
-# FIX #1: Use npm install instead of npm ci
-# npm ci requires an exactly-synced package-lock.json which may
-# not exist or may be out of sync in fresh clones
 RUN npm install --legacy-peer-deps
 
 COPY frontend/ .
-
-# Build static export (not standalone, since we serve from Go)
 RUN npm run build
 
 # ==================== Final Image ====================
@@ -52,23 +43,14 @@ LABEL org.opencontainers.image.title="Z-UI"
 LABEL org.opencontainers.image.description="The Future of Proxy Management"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.url="https://github.com/Zendan-ui/z-ui"
-LABEL org.opencontainers.image.source="https://github.com/Zendan-ui/z-ui"
 
 RUN apk add --no-cache \
-    ca-certificates \
-    curl \
-    wget \
-    unzip \
-    tzdata \
-    bash \
-    jq \
-    iptables \
-    ip6tables \
-    libgcc \
-    libstdc++
+    ca-certificates curl wget unzip tzdata bash jq \
+    iptables ip6tables libgcc libstdc++
 
-# FIX #7: Auto-detect architecture for Xray download
 ARG TARGETARCH=amd64
+
+# Xray-core (multi-arch)
 RUN set -ex && \
     XRAY_VERSION=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name) && \
     case "${TARGETARCH}" in \
@@ -82,7 +64,7 @@ RUN set -ex && \
     chmod +x /usr/local/bin/xray && \
     rm -f /tmp/xray.zip
 
-# FIX #8: Auto-detect architecture for Sing-box download
+# Sing-box (multi-arch)
 RUN set -ex && \
     SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/v//') && \
     case "${TARGETARCH}" in \
@@ -97,29 +79,22 @@ RUN set -ex && \
     chmod +x /usr/local/bin/sing-box && \
     rm -rf /tmp/singbox* /tmp/sing-box*
 
-# Download GeoIP and GeoSite databases
+# GeoIP/GeoSite
 RUN mkdir -p /usr/local/share/xray && \
     wget -qO /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" && \
     wget -qO /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 
 WORKDIR /app
 
-# Copy backend binary
 COPY --from=backend-builder /build/z-ui .
-
-# FIX #6: Copy the static export from Next.js (not standalone)
-# The Go server serves these files directly from ./frontend/out/
 COPY --from=frontend-builder /build/out ./frontend/out/
 
-# Create data directories
 RUN mkdir -p /var/lib/z-ui/{db,xray,singbox,certs,backups,logs,geo}
 
-# Copy configs and entrypoint
 COPY configs/ ./configs/
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Environment defaults
 ENV ZUI_HOST=0.0.0.0 \
     ZUI_PORT=8443 \
     ZUI_DB_TYPE=sqlite \
@@ -130,7 +105,6 @@ ENV ZUI_HOST=0.0.0.0 \
     ZUI_DEFAULT_THEME=amoled
 
 EXPOSE 8443
-
 VOLUME ["/var/lib/z-ui"]
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

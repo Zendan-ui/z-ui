@@ -11,7 +11,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
 	"github.com/Zendan-ui/z-ui/internal/auth"
-	"github.com/Zendan-ui/z-ui/internal/config"
 	"github.com/Zendan-ui/z-ui/internal/database"
 	"github.com/Zendan-ui/z-ui/internal/database/models"
 	"github.com/Zendan-ui/z-ui/pkg/logger"
@@ -128,7 +127,6 @@ func AuditLog() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		err := c.Next()
 
-		// Only log write operations
 		method := c.Method()
 		if method == "GET" || method == "OPTIONS" {
 			return err
@@ -166,7 +164,6 @@ func APIKeyAuth() fiber.Handler {
 			return c.Status(401).JSON(fiber.Map{"error": "API key required"})
 		}
 
-		// Validate API key against database
 		var setting models.Setting
 		result := database.DB.Where("key = ?", "api_key_"+apiKey).First(&setting)
 		if result.Error != nil {
@@ -185,8 +182,4 @@ func SetupPublicMiddleware() fiber.Handler {
 		c.Set("X-XSS-Protection", "1; mode=block")
 		return c.Next()
 	}
-}
-
-func _ () {
-	_ = config.C
 }

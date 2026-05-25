@@ -10,7 +10,6 @@ import (
 
 	"github.com/Zendan-ui/z-ui/internal/database"
 	"github.com/Zendan-ui/z-ui/internal/database/models"
-	"github.com/Zendan-ui/z-ui/pkg/logger"
 )
 
 type SubscriptionService struct {
@@ -770,8 +769,4 @@ func getMap(m map[string]interface{}, key string) map[string]interface{} {
 		}
 	}
 	return nil
-}
-
-func _ () {
-	_ = logger.Info
 }

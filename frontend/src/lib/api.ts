@@ -115,6 +115,14 @@ class ApiClient {
   updateSettings = (data: Record<string, string>) =>
     this.client.put('/system/settings', data);
   getAuditLogs = (page?: number) => this.client.get(`/system/audit-logs?page=${page || 1}`);
+
+  // Tunnels
+  getTunnels = () => this.client.get('/tunnels');
+  getTunnel = (id: number) => this.client.get(`/tunnels/${id}`);
+  createTunnel = (data: any) => this.client.post('/tunnels', data);
+  updateTunnel = (id: number, data: any) => this.client.put(`/tunnels/${id}`, data);
+  deleteTunnel = (id: number) => this.client.delete(`/tunnels/${id}`);
+  toggleTunnel = (id: number) => this.client.post(`/tunnels/${id}/toggle`);
 }
 
 export const api = new ApiClient();
