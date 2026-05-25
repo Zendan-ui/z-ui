@@ -122,7 +122,7 @@ func Load() *Config {
 			User:     getEnv("ZUI_DB_USER", "zui"),
 			Password: getEnv("ZUI_DB_PASS", ""),
 			SSLMode:  getEnv("ZUI_DB_SSL", "disable"),
-			SQLite:   getEnv("ZUI_DB_SQLITE", "./data/zui.db"),
+			SQLite:   getEnv("ZUI_DB_SQLITE", "/var/lib/z-ui/db/z-ui.db"),
 		},
 		Redis: RedisConfig{
 			URL:      getEnv("ZUI_REDIS_URL", "redis://localhost:6379"),
@@ -142,16 +142,16 @@ func Load() *Config {
 		},
 		Xray: XrayConfig{
 			BinaryPath:  getEnv("ZUI_XRAY_PATH", "/usr/local/bin/xray"),
-			ConfigPath:  getEnv("ZUI_XRAY_CONFIG", "./data/xray/config.json"),
+			ConfigPath:  getEnv("ZUI_XRAY_CONFIG", "/var/lib/z-ui/xray/config.json"),
 			AssetPath:   getEnv("ZUI_XRAY_ASSETS", "/usr/local/share/xray"),
-			LogPath:     getEnv("ZUI_XRAY_LOG", "./data/logs/xray.log"),
+			LogPath:     getEnv("ZUI_XRAY_LOG", "/var/lib/z-ui/logs/xray.log"),
 			APIPort:     getEnvInt("ZUI_XRAY_API_PORT", 10085),
 			EnableStats: getEnvBool("ZUI_XRAY_STATS", true),
 		},
 		SingBox: SingBoxConfig{
 			BinaryPath: getEnv("ZUI_SINGBOX_PATH", "/usr/local/bin/sing-box"),
-			ConfigPath: getEnv("ZUI_SINGBOX_CONFIG", "./data/singbox/config.json"),
-			LogPath:    getEnv("ZUI_SINGBOX_LOG", "./data/logs/singbox.log"),
+			ConfigPath: getEnv("ZUI_SINGBOX_CONFIG", "/var/lib/z-ui/singbox/config.json"),
+			LogPath:    getEnv("ZUI_SINGBOX_LOG", "/var/lib/z-ui/logs/singbox.log"),
 		},
 		Telegram: TelegramConfig{
 			Token:   getEnv("ZUI_TELEGRAM_TOKEN", ""),
@@ -170,8 +170,8 @@ func Load() *Config {
 			RetentionDays:  getEnvInt("ZUI_RETENTION_DAYS", 30),
 		},
 		Geo: GeoConfig{
-			GeoIPPath:   getEnv("ZUI_GEOIP_PATH", "./data/geo/geoip.dat"),
-			GeoSitePath: getEnv("ZUI_GEOSITE_PATH", "./data/geo/geosite.dat"),
+			GeoIPPath:   getEnv("ZUI_GEOIP_PATH", "/var/lib/z-ui/geo/geoip.dat"),
+			GeoSitePath: getEnv("ZUI_GEOSITE_PATH", "/var/lib/z-ui/geo/geosite.dat"),
 			AutoUpdate:  getEnvBool("ZUI_GEO_AUTO_UPDATE", true),
 		},
 	}

@@ -53,7 +53,7 @@ func main() {
 	if cfg.Server.Debug {
 		logger.SetLevel(0) // DEBUG
 	}
-	logger.SetFile("./data/logs/zui.log")
+	logger.SetFile("/var/lib/z-ui/logs/zui.log")
 
 	logger.Info("Starting Z-UI server...")
 
