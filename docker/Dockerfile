@@ -6,8 +6,9 @@
 # ==================== Build Backend ====================
 FROM golang:1.22-alpine AS backend-builder
 
-# FIX #2: Install musl-dev + build dependencies for CGO/SQLite on Alpine
-RUN apk add --no-cache git gcc musl-dev libc-dev
+# Minimal dependencies: only git needed for go mod download
+# Pure static binary (CGO_ENABLED=0) eliminates need for gcc/musl-dev
+RUN apk add --no-cache git
 
 WORKDIR /build
 
@@ -18,11 +19,12 @@ RUN go mod download 2>/dev/null || go mod tidy && go mod download
 
 COPY backend/ .
 
-# FIX #2: Add -tags "musl" to fix pread64/pwrite64 errors on Alpine
-# This tells go-sqlite3 to use musl-compatible syscalls
+# Build pure static binary with CGO_ENABLED=0
+# This eliminates dependency on gcc/musl-dev/libc-dev
+# Solves I/O errors on resource-constrained environments
 ARG TARGETARCH=amd64
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} \
-    go build -tags "musl" -ldflags="-s -w -X main.Version=1.0.0" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
+    go build -ldflags="-s -w -X main.Version=1.0.0" \
     -o z-ui ./cmd/server
 
 # ==================== Build Frontend ====================
@@ -34,7 +36,7 @@ COPY frontend/package.json ./
 # If package-lock.json exists, copy it too
 COPY frontend/package-lock.json* ./
 
-# FIX #1: Use npm install instead of npm ci
+# Use npm install instead of npm ci
 # npm ci requires an exactly-synced package-lock.json which may
 # not exist or may be out of sync in fresh clones
 RUN npm install --legacy-peer-deps
@@ -67,7 +69,7 @@ RUN apk add --no-cache \
     libgcc \
     libstdc++
 
-# FIX #7: Auto-detect architecture for Xray download
+# Auto-detect architecture for Xray download
 ARG TARGETARCH=amd64
 RUN set -ex && \
     XRAY_VERSION=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name) && \
@@ -82,7 +84,7 @@ RUN set -ex && \
     chmod +x /usr/local/bin/xray && \
     rm -f /tmp/xray.zip
 
-# FIX #8: Auto-detect architecture for Sing-box download
+# Auto-detect architecture for Sing-box download
 RUN set -ex && \
     SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/v//') && \
     case "${TARGETARCH}" in \
@@ -107,7 +109,7 @@ WORKDIR /app
 # Copy backend binary
 COPY --from=backend-builder /build/z-ui .
 
-# FIX #6: Copy the static export from Next.js (not standalone)
+# Copy the static export from Next.js (not standalone)
 # The Go server serves these files directly from ./frontend/out/
 COPY --from=frontend-builder /build/out ./frontend/out/
 
