@@ -11,7 +11,9 @@
 # ==================== Build Backend ====================
 FROM golang:1.22-alpine AS backend-builder
 
-RUN apk add --no-cache git gcc musl-dev libc-dev
+# Minimal dependencies: only git needed for go mod download
+# Pure static binary (CGO_ENABLED=0) eliminates need for gcc/musl-dev
+RUN apk add --no-cache git
 
 WORKDIR /build
 COPY backend/go.mod ./
@@ -19,9 +21,12 @@ RUN go mod download 2>/dev/null || go mod tidy && go mod download
 
 COPY backend/ .
 
+# Build pure static binary with CGO_ENABLED=0
+# This eliminates dependency on gcc/musl-dev/libc-dev
+# Solves I/O errors on resource-constrained environments
 ARG TARGETARCH=amd64
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=${TARGETARCH} \
-    go build -tags "musl" -ldflags="-s -w -X main.Version=1.0.0" \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
+    go build -ldflags="-s -w -X main.Version=1.0.0" \
     -o z-ui ./cmd/server
 
 # ==================== Build Frontend ====================
@@ -44,8 +49,7 @@ LABEL org.opencontainers.image.description="The Future of Proxy Management"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.url="https://github.com/Zendan-ui/z-ui"
 
-RUN apk add --no-cache \
-    ca-certificates curl wget unzip tzdata bash jq \
+RUN apk add --no-cache curl wget unzip tzdata bash jq \
     iptables ip6tables libgcc libstdc++
 
 ARG TARGETARCH=amd64
