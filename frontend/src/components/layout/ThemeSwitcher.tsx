@@ -1,35 +1,25 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useThemeStore, applyTheme, ThemeMode } from '@/store/theme';
-
-const themeOptions: { id: ThemeMode; label: string; bg: string }[] = [
-  { id: 'dark', label: 'Dark', bg: 'linear-gradient(135deg, #10101e, #1a1a32)' },
-  { id: 'darker', label: 'Darker', bg: 'linear-gradient(135deg, #040408, #101022)' },
-  { id: 'amoled', label: 'AMOLED', bg: 'linear-gradient(135deg, #000000, #0a0a10)' },
-];
+import { useThemeStore, applyTheme, themeList } from '@/store/theme';
 
 export default function ThemeSwitcher() {
   const { mode, setTheme } = useThemeStore();
-
-  useEffect(() => {
-    applyTheme(mode);
-  }, [mode]);
-
-  const handleSwitch = (m: ThemeMode) => {
-    setTheme(m);
-    applyTheme(m);
-  };
+  useEffect(() => { applyTheme(mode); }, [mode]);
 
   return (
-    <div className="theme-switch">
-      {themeOptions.map((t) => (
+    <div className="flex gap-1 p-1 rounded-lg bg-g b">
+      {themeList.map((t) => (
         <button
           key={t.id}
-          onClick={() => handleSwitch(t.id)}
-          className={`theme-btn ${mode === t.id ? 'active' : ''}`}
-          style={{ background: t.bg }}
+          onClick={() => setTheme(t.id)}
           title={t.label}
+          className="w-5 h-5 rounded-md transition-all hover:scale-110"
+          style={{
+            background: t.color,
+            border: mode === t.id ? '2px solid var(--text-0)' : '2px solid transparent',
+            boxShadow: mode === t.id ? '0 0 6px ' + t.color + '60' : 'none',
+          }}
         />
       ))}
     </div>

@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push
 
 on:
   push:
@@ -11,29 +11,14 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Test Go Build
-        run: |
-          cd backend
-          docker run --rm -v $(pwd):/src -w /src golang:1.24-alpine sh -c "
-            apk add --no-cache git gcc musl-dev &&
-            go mod tidy &&
-            echo '=== go mod tidy OK ===' &&
-            CGO_ENABLED=1 go build -tags musl -ldflags='-s -w' -o /dev/null ./cmd/server 2>&1 &&
-            echo '=== BUILD OK ==='
-          "
-
       - uses: docker/setup-buildx-action@v3
-
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: docker/build-push-action@v5
         with:
           context: .

@@ -1,60 +1,25 @@
-# نصب Z-UI
-
-## نصب سریع
+# نصب
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
 ```
 
-### بعد از نصب
-
-لاگ‌ها نمایش داده می‌شود. با `Ctrl+C` متوقف کنید.
-
-ساخت ادمین:
-
-```bash
-z-ui admin create --sudo
-```
-
-داشبورد: `http://YOUR_IP:8443/dashboard/`
-
-### ساختار فایل‌ها
-
-| مسیر | محتوا |
-|---|---|
-| `/opt/z-ui/.env` | تنظیمات |
-| `/opt/z-ui/docker-compose.yml` | فایل داکر |
-| `/var/lib/z-ui/db/` | دیتابیس SQLite |
-| `/var/lib/z-ui/xray/` | کانفیگ Xray |
-| `/var/lib/z-ui/certs/` | گواهی SSL |
-| `/var/lib/z-ui/backups/` | پشتیبان‌ها |
-| `/var/lib/z-ui/logs/` | لاگ‌ها |
-
-### تغییر تنظیمات
-
-```bash
-z-ui config edit
-z-ui restart
-```
-
-### دستورات
+بعد نصب یوزرنیم و رمز و پورت میپرسه. بعدش:
 
 ```
-z-ui start        شروع
-z-ui stop         توقف
-z-ui restart      ری‌استارت
 z-ui status       وضعیت
-z-ui logs         لاگ
-z-ui update       بروزرسانی
-z-ui info         آدرس پنل
-z-ui admin create ساخت ادمین
-z-ui config edit  ویرایش تنظیمات
-z-ui config show  نمایش تنظیمات
-z-ui backup       پشتیبان
-z-ui uninstall    حذف
+z-ui ping          تست اتصال
+z-ui logs          لاگ
+z-ui port set 443  تغییر پورت
+z-ui admin create  ساخت ادمین
+z-ui config edit   ویرایش
+z-ui update        بروزرسانی
+z-ui backup        پشتیبان
+z-ui help          راهنما
 ```
 
-### پشتیبانی
+فایل‌ها:
+- تنظیمات: `/opt/z-ui/.env`
+- دیتا: `/var/lib/z-ui/`
 
-- Telegram: [@Zendan_Ui](https://t.me/Zendan_Ui)
-- GitHub: [github.com/Zendan-ui/z-ui](https://github.com/Zendan-ui/z-ui)
+[Telegram](https://t.me/Zendan_Ui) · [GitHub](https://github.com/Zendan-ui/z-ui)

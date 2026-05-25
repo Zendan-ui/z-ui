@@ -1,137 +1,92 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ThemeMode = 'dark' | 'darker' | 'amoled';
+export type ThemeMode = 'blue' | 'green' | 'dark' | 'light';
 
-export interface ThemeColors {
-  bg0: string;
-  bg1: string;
-  bg2: string;
-  bg3: string;
-  bgCard: string;
-  bgCardHover: string;
-  bgGlass: string;
-  bgInput: string;
-  border: string;
-  borderActive: string;
-  text0: string;
-  text1: string;
-  text2: string;
-  text3: string;
-  accent1: string;
-  accent2: string;
-  accent3: string;
-  accentGradient: string;
-  sidebarBg: string;
+interface ThemeColors {
+  bg0: string; bg1: string; bg2: string; bg3: string;
+  bgCard: string; bgCardHover: string; bgGlass: string; bgInput: string;
+  border: string; borderActive: string;
+  text0: string; text1: string; text2: string; text3: string;
+  accent1: string; accent2: string; accent3: string;
+  accentG: string; sidebarBg: string;
 }
 
 const themes: Record<ThemeMode, ThemeColors> = {
+  // آبی-سیاه (پیش‌فرض) — رنگ آبی ملایم روی سیاه
+  blue: {
+    bg0:'#060b18',bg1:'#0a1628',bg2:'#0f1d35',bg3:'#152742',
+    bgCard:'rgba(10,22,40,.88)',bgCardHover:'rgba(15,29,53,.92)',
+    bgGlass:'rgba(59,130,246,.04)',bgInput:'rgba(59,130,246,.06)',
+    border:'rgba(59,130,246,.1)',borderActive:'rgba(59,130,246,.4)',
+    text0:'#e8edf5',text1:'#93a5c4',text2:'#5d7599',text3:'#3a4f6e',
+    accent1:'#3b82f6',accent2:'#2563eb',accent3:'#60a5fa',
+    accentG:'linear-gradient(135deg,#3b82f6,#1d4ed8)',sidebarBg:'rgba(6,11,24,.96)',
+  },
+  // سبز-سیاه — رنگ سبز ملایم روی سیاه
+  green: {
+    bg0:'#06120a',bg1:'#0a1f12',bg2:'#0f2d1a',bg3:'#153b23',
+    bgCard:'rgba(10,31,18,.88)',bgCardHover:'rgba(15,45,26,.92)',
+    bgGlass:'rgba(34,197,94,.04)',bgInput:'rgba(34,197,94,.06)',
+    border:'rgba(34,197,94,.1)',borderActive:'rgba(34,197,94,.4)',
+    text0:'#e8f5ec',text1:'#93c4a5',text2:'#5d9975',text3:'#3a6e4f',
+    accent1:'#22c55e',accent2:'#16a34a',accent3:'#4ade80',
+    accentG:'linear-gradient(135deg,#22c55e,#15803d)',sidebarBg:'rgba(6,18,10,.96)',
+  },
+  // سیاه خالص — مینیمال
   dark: {
-    bg0: '#0c0c14',
-    bg1: '#10101e',
-    bg2: '#141428',
-    bg3: '#1a1a32',
-    bgCard: 'rgba(16,16,34,0.85)',
-    bgCardHover: 'rgba(22,22,44,0.9)',
-    bgGlass: 'rgba(255,255,255,0.035)',
-    bgInput: 'rgba(255,255,255,0.05)',
-    border: 'rgba(255,255,255,0.07)',
-    borderActive: 'rgba(0,180,255,0.35)',
-    text0: '#f0f0f5',
-    text1: '#b0b0c0',
-    text2: '#707088',
-    text3: '#44445a',
-    accent1: '#00b4ff',
-    accent2: '#7c3aed',
-    accent3: '#c471f5',
-    accentGradient: 'linear-gradient(135deg, #00b4ff, #7c3aed)',
-    sidebarBg: 'rgba(8,8,20,0.96)',
+    bg0:'#000000',bg1:'#0a0a0a',bg2:'#111111',bg3:'#1a1a1a',
+    bgCard:'rgba(12,12,12,.9)',bgCardHover:'rgba(20,20,20,.94)',
+    bgGlass:'rgba(255,255,255,.03)',bgInput:'rgba(255,255,255,.05)',
+    border:'rgba(255,255,255,.07)',borderActive:'rgba(255,255,255,.2)',
+    text0:'#e4e4e4',text1:'#a0a0a0',text2:'#666666',text3:'#444444',
+    accent1:'#888888',accent2:'#666666',accent3:'#aaaaaa',
+    accentG:'linear-gradient(135deg,#555,#333)',sidebarBg:'rgba(0,0,0,.98)',
   },
-  darker: {
-    bg0: '#040408',
-    bg1: '#08080f',
-    bg2: '#0c0c18',
-    bg3: '#101022',
-    bgCard: 'rgba(8,8,20,0.9)',
-    bgCardHover: 'rgba(12,12,30,0.92)',
-    bgGlass: 'rgba(255,255,255,0.025)',
-    bgInput: 'rgba(255,255,255,0.035)',
-    border: 'rgba(255,255,255,0.05)',
-    borderActive: 'rgba(0,180,255,0.3)',
-    text0: '#e8e8f0',
-    text1: '#a0a0b4',
-    text2: '#606078',
-    text3: '#3a3a50',
-    accent1: '#00a0ee',
-    accent2: '#6d28d9',
-    accent3: '#a855f7',
-    accentGradient: 'linear-gradient(135deg, #00a0ee, #6d28d9)',
-    sidebarBg: 'rgba(4,4,12,0.97)',
-  },
-  amoled: {
-    bg0: '#000000',
-    bg1: '#000000',
-    bg2: '#050508',
-    bg3: '#0a0a10',
-    bgCard: 'rgba(4,4,10,0.92)',
-    bgCardHover: 'rgba(8,8,16,0.95)',
-    bgGlass: 'rgba(255,255,255,0.018)',
-    bgInput: 'rgba(255,255,255,0.025)',
-    border: 'rgba(255,255,255,0.04)',
-    borderActive: 'rgba(0,180,255,0.25)',
-    text0: '#e0e0e8',
-    text1: '#9090a8',
-    text2: '#505068',
-    text3: '#303044',
-    accent1: '#00b4ff',
-    accent2: '#7c3aed',
-    accent3: '#c471f5',
-    accentGradient: 'linear-gradient(135deg, #00b4ff, #7c3aed)',
-    sidebarBg: 'rgba(0,0,0,0.98)',
+  // سفید نرم — روشن ملایم، چشم اذیت نکنه
+  light: {
+    bg0:'#f0f2f5',bg1:'#e8ebf0',bg2:'#dde1e8',bg3:'#d0d5de',
+    bgCard:'rgba(255,255,255,.85)',bgCardHover:'rgba(255,255,255,.95)',
+    bgGlass:'rgba(0,0,0,.03)',bgInput:'rgba(0,0,0,.04)',
+    border:'rgba(0,0,0,.08)',borderActive:'rgba(59,130,246,.4)',
+    text0:'#1a1a2e',text1:'#3a3a5c',text2:'#6a6a8a',text3:'#9a9ab0',
+    accent1:'#2563eb',accent2:'#1d4ed8',accent3:'#3b82f6',
+    accentG:'linear-gradient(135deg,#2563eb,#1d4ed8)',sidebarBg:'rgba(255,255,255,.97)',
   },
 };
 
+export const themeList: { id: ThemeMode; label: string; labelFa: string; labelRu: string; color: string }[] = [
+  { id: 'blue', label: 'Blue Dark', labelFa: 'آبی تیره', labelRu: 'Синяя', color: '#3b82f6' },
+  { id: 'green', label: 'Green Dark', labelFa: 'سبز تیره', labelRu: 'Зелёная', color: '#22c55e' },
+  { id: 'dark', label: 'Pure Black', labelFa: 'سیاه خالص', labelRu: 'Чёрная', color: '#444444' },
+  { id: 'light', label: 'Soft Light', labelFa: 'روشن نرم', labelRu: 'Светлая', color: '#e8ebf0' },
+];
+
 interface ThemeState {
   mode: ThemeMode;
-  colors: ThemeColors;
-  setTheme: (mode: ThemeMode) => void;
+  setTheme: (m: ThemeMode) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
-  persist(
-    (set) => ({
-      mode: 'amoled',
-      colors: themes.amoled,
-      setTheme: (mode: ThemeMode) =>
-        set({ mode, colors: themes[mode] }),
-    }),
-    { name: 'z-ui-theme' }
-  )
+  persist((set) => ({
+    mode: 'blue',
+    setTheme: (m) => { set({ mode: m }); applyTheme(m); },
+  }), { name: 'z-ui-theme' })
 );
 
-export function applyTheme(mode: ThemeMode) {
-  const t = themes[mode];
-  const root = document.documentElement;
-  root.style.setProperty('--bg-0', t.bg0);
-  root.style.setProperty('--bg-1', t.bg1);
-  root.style.setProperty('--bg-2', t.bg2);
-  root.style.setProperty('--bg-3', t.bg3);
-  root.style.setProperty('--bg-card', t.bgCard);
-  root.style.setProperty('--bg-card-hover', t.bgCardHover);
-  root.style.setProperty('--bg-glass', t.bgGlass);
-  root.style.setProperty('--bg-input', t.bgInput);
-  root.style.setProperty('--border', t.border);
-  root.style.setProperty('--border-active', t.borderActive);
-  root.style.setProperty('--text-0', t.text0);
-  root.style.setProperty('--text-1', t.text1);
-  root.style.setProperty('--text-2', t.text2);
-  root.style.setProperty('--text-3', t.text3);
-  root.style.setProperty('--accent-1', t.accent1);
-  root.style.setProperty('--accent-2', t.accent2);
-  root.style.setProperty('--accent-3', t.accent3);
-  root.style.setProperty('--accent-g', t.accentGradient);
-  root.style.setProperty('--sidebar-bg', t.sidebarBg);
+export function applyTheme(m: ThemeMode) {
+  const t = themes[m];
+  if (!t) return;
+  const s = document.documentElement.style;
+  s.setProperty('--bg-0',t.bg0);s.setProperty('--bg-1',t.bg1);s.setProperty('--bg-2',t.bg2);s.setProperty('--bg-3',t.bg3);
+  s.setProperty('--bg-card',t.bgCard);s.setProperty('--bg-card-hover',t.bgCardHover);
+  s.setProperty('--bg-glass',t.bgGlass);s.setProperty('--bg-input',t.bgInput);
+  s.setProperty('--border',t.border);s.setProperty('--border-active',t.borderActive);
+  s.setProperty('--text-0',t.text0);s.setProperty('--text-1',t.text1);s.setProperty('--text-2',t.text2);s.setProperty('--text-3',t.text3);
+  s.setProperty('--accent-1',t.accent1);s.setProperty('--accent-2',t.accent2);s.setProperty('--accent-3',t.accent3);
+  s.setProperty('--accent-g',t.accentG);s.setProperty('--sidebar-bg',t.sidebarBg);
+  // Light mode special handling
+  document.documentElement.classList.toggle('light-mode', m === 'light');
 }
 
-export { themes };
 export default useThemeStore;

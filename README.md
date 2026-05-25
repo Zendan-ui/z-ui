@@ -1,108 +1,117 @@
-# Z-UI
+<p align="center">
+  <img src="assets/logo.svg" width="120" alt="Z-UI" />
+</p>
 
-**پنل مدیریت پروکسی نسل بعدی**
+<h1 align="center">Z-UI</h1>
 
-[English](#overview) · [فارسی](#فارسی) · [Telegram](https://t.me/Zendan_Ui)
+<p align="center">
+  پنل مدیریت پروکسی · Proxy Management Panel · Панель управления прокси
+</p>
+
+<p align="center">
+  <a href="#نصب">فارسی</a> · <a href="#install">English</a> · <a href="#установка">Русский</a> · <a href="https://t.me/Zendan_Ui">Telegram</a>
+</p>
 
 ---
 
-## Overview
-
-Z-UI is a proxy management panel built with Go and Next.js. It supports Xray-core and Sing-box with a modern dark UI.
-
-### Quick Install
+## نصب
 
 ```bash
 sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
 ```
 
-Then create an admin:
-
-```bash
-z-ui admin create --sudo
-```
-
-Dashboard: `http://YOUR_IP:8443/dashboard`
-
-### Features
-
-**Protocols:** VLESS, VMess, Trojan, Shadowsocks, Hysteria2, TUIC, WireGuard, SOCKS5  
-**Transport:** TCP, WebSocket, gRPC, QUIC, KCP, xHTTP, HTTPUpgrade, SplitHTTP  
-**Security:** TLS, Reality  
-**Subscription:** V2Ray, Clash, Sing-box, JSON — compatible with v2rayNG, Clash Meta, Hiddify, Shadowrocket, Nekobox, Streisand  
-**Tunnel:** Direct, Reverse, Relay, WARP  
-**Languages:** English, Persian (RTL), Russian  
-**Themes:** Dark, Darker, AMOLED Black  
-
-### Stack
-
-- Backend: Go (Fiber)
-- Frontend: Next.js, TypeScript, TailwindCSS
-- Database: SQLite / PostgreSQL
-- Cache: Redis
-- Deploy: Docker
-
-### CLI
+هنگام نصب، نام کاربری، رمز عبور و پورت پنل از شما پرسیده می‌شود. بعد از نصب:
 
 ```
-z-ui start|stop|restart|status|logs|update|info
-z-ui admin create|list|delete
-z-ui user create|list|delete|suspend|activate|reset-traffic
-z-ui config edit|show|set|get|reset-password|set-port
-z-ui xray restart|version|config|update
-z-ui ssl issue|renew
-z-ui bbr|warp|speedtest|geo-update
-z-ui firewall status|open|enable|disable
-z-ui backup|restore|health|uninstall
-z-ui                        # interactive menu
-```
-
-### Docker Compose
-
-```bash
-git clone https://github.com/Zendan-ui/z-ui.git
-cd z-ui && docker compose up -d
-```
-
-### Manual Build
-
-```bash
-cd backend && go build -tags musl -o z-ui ./cmd/server
-cd frontend && npm install && npm run build
-```
-
----
-
-## فارسی
-
-Z-UI یک پنل مدیریت پروکسی با بکاند Go و فرانت‌اند Next.js است.
-
-### نصب سریع
-
-```bash
-sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
-z-ui admin create --sudo
+z-ui status         وضعیت سرور
+z-ui ping           تست اتصال
+z-ui logs           مشاهده لاگ
+z-ui port set 443   تغییر پورت
+z-ui admin create   ساخت ادمین
+z-ui config edit    ویرایش تنظیمات
+z-ui update         بروزرسانی
+z-ui backup         پشتیبان‌گیری
+z-ui help           راهنمای کامل
 ```
 
 ### امکانات
 
-- پشتیبانی از VLESS, VMess, Trojan, Shadowsocks, Hysteria2, TUIC, WireGuard
-- تونل مستقیم، معکوس، رله و WARP
-- سابسکریپشن برای Clash, Sing-box, V2Ray
-- ربات تلگرام با مدیریت کامل
-- ۳ تم: تیره، تیره‌تر، سیاه خالص
-- ۳ زبان: انگلیسی، فارسی، روسی
-- CLI با ۴۰+ دستور و منوی اینتراکتیو
-
-[مستندات کامل نصب](docs/INSTALL.md)
+- داشبورد مدیریتی با نمایش مصرف CPU، RAM و دیسک
+- مدیریت کاربران با ترافیک و تاریخ انقضا
+- ساخت اتوماتیک لینک اشتراک و QR Code
+- ساخت تونل مستقیم، معکوس و WARP
+- ربات تلگرام برای مدیریت از موبایل
+- ۴ تم: آبی تیره، سبز تیره، سیاه خالص، روشن نرم
+- ۳ زبان: فارسی، انگلیسی، روسی
 
 ---
 
-## Links
+## Install
 
-- GitHub: [github.com/Zendan-ui/z-ui](https://github.com/Zendan-ui/z-ui)
-- Telegram: [@Zendan_Ui](https://t.me/Zendan_Ui)
+```bash
+sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
+```
 
-## License
+During installation, you will be asked for admin username, password, and panel port. After installation:
 
-MIT
+```
+z-ui status         Server status
+z-ui ping           Test connectivity
+z-ui logs           View logs
+z-ui port set 443   Change port
+z-ui admin create   Create admin
+z-ui config edit    Edit settings
+z-ui update         Update panel
+z-ui backup         Create backup
+z-ui help           Show all commands
+```
+
+### Features
+
+- Dashboard with real-time CPU, RAM, and disk monitoring
+- User management with traffic limits and expiry dates
+- Automatic subscription links and QR code generation
+- Direct, reverse, and WARP tunnel support
+- Telegram bot for mobile management
+- 4 themes: Blue Dark, Green Dark, Pure Black, Soft Light
+- 3 languages: English, Persian, Russian
+
+---
+
+## Установка
+
+```bash
+sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
+```
+
+При установке вас попросят ввести имя администратора, пароль и порт панели. После установки:
+
+```
+z-ui status         Статус сервера
+z-ui ping           Тест соединения
+z-ui logs           Просмотр логов
+z-ui port set 443   Изменить порт
+z-ui admin create   Создать админа
+z-ui config edit    Редактировать настройки
+z-ui update         Обновить панель
+z-ui backup         Создать резервную копию
+z-ui help           Все команды
+```
+
+### Возможности
+
+- Панель с мониторингом CPU, RAM и диска в реальном времени
+- Управление пользователями с лимитами трафика и сроком действия
+- Автоматическая генерация ссылок подписки и QR-кодов
+- Поддержка прямых, обратных и WARP-туннелей
+- Телеграм-бот для управления с телефона
+- 4 темы: Синяя тёмная, Зелёная тёмная, Чёрная, Светлая мягкая
+- 3 языка: Английский, Персидский, Русский
+
+---
+
+<p align="center">
+  <a href="https://github.com/Zendan-ui/z-ui">GitHub</a> · <a href="https://t.me/Zendan_Ui">Telegram</a>
+</p>
+
+<p align="center">MIT License</p>

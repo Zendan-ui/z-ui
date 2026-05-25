@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/curve25519"
 )
 
+// GenerateWireGuardKeyPair generates X25519 key pair for WireGuard.
 func GenerateWireGuardKeyPair() (privateKey, publicKey string, err error) {
 	var privKey [32]byte
 	if _, err := rand.Read(privKey[:]); err != nil {
@@ -27,16 +28,19 @@ func GenerateWireGuardKeyPair() (privateKey, publicKey string, err error) {
 		base64.StdEncoding.EncodeToString(pubKey), nil
 }
 
+// GenerateX25519KeyPair generates key pair for Reality.
 func GenerateX25519KeyPair() (privateKey, publicKey string, err error) {
 	return GenerateWireGuardKeyPair()
 }
 
+// GenerateRealityShortID generates random short ID for Reality.
 func GenerateRealityShortID() string {
 	b := make([]byte, 8)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
 
+// GenerateEd25519KeyPair generates Ed25519 key pair.
 func GenerateEd25519KeyPair() (privateKey, publicKey string, err error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
@@ -46,6 +50,7 @@ func GenerateEd25519KeyPair() (privateKey, publicKey string, err error) {
 		base64.StdEncoding.EncodeToString(pub), nil
 }
 
+// GenerateShadowsocks2022Key generates base64 key for SS 2022.
 func GenerateShadowsocks2022Key(keySize int) (string, error) {
 	key := make([]byte, keySize)
 	if _, err := rand.Read(key); err != nil {
@@ -54,6 +59,7 @@ func GenerateShadowsocks2022Key(keySize int) (string, error) {
 	return base64.StdEncoding.EncodeToString(key), nil
 }
 
+// GenerateUUID generates UUID v4.
 func GenerateUUID() string {
 	b := make([]byte, 16)
 	rand.Read(b)

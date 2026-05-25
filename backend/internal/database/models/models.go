@@ -61,6 +61,11 @@ type User struct {
 	AutoRenew       bool           `gorm:"default:false" json:"auto_renew"`
 	RenewDays       int            `gorm:"default:30" json:"renew_days"`
 	RenewTraffic    int64          `gorm:"default:0" json:"renew_traffic"`
+	DataLimitReset  string         `gorm:"type:varchar(20);default:'no_reset'" json:"data_limit_reset_strategy"` // no_reset, day, week, month, year
+	LifetimeUsed    int64          `gorm:"default:0" json:"lifetime_used_traffic"`
+	OnHoldTimeout   *time.Time     `json:"on_hold_timeout"`
+	OnHoldExpire    int64          `gorm:"default:0" json:"on_hold_expire_duration"`
+	ExcludedInbounds string        `gorm:"type:text" json:"excluded_inbounds"` // JSON array of excluded inbound tags
 	Tags            string         `gorm:"type:varchar(256)" json:"tags"`
 	Proxies         []Proxy        `gorm:"foreignKey:UserID" json:"proxies,omitempty"`
 	Subscriptions   []Subscription `gorm:"foreignKey:UserID" json:"subscriptions,omitempty"`

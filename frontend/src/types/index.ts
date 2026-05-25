@@ -153,12 +153,20 @@ export interface AuditLog {
 }
 
 export interface DashboardData {
-  users: { total: number; active: number };
+  users: { total: number; active: number; online?: number };
   servers: number;
   inbounds: number;
   traffic: { up: number; down: number; total: number };
   system: {
+    hostname: string;
     uptime: number;
+    cpu_usage: number;
+    cpu_cores: number;
+    mem_total: number;
+    mem_used: number;
+    mem_percent: number;
+    disk_percent: number;
+    load_avg: number[];
     goroutines: number;
     memory_alloc: number;
     memory_sys: number;
