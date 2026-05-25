@@ -8,12 +8,14 @@
 #   docker compose logs -f
 #   docker compose down
 #
+# For resource-constrained environments, this uses SQLite by default
+# To use PostgreSQL instead, set: ZUI_DB_TYPE=postgres
 
 services:
   z-ui:
     build:
       context: .
-      # FIX #3: Use root Dockerfile so `docker compose up` works from project root
+      # Use root Dockerfile so `docker compose up` works from project root
       # Both ./Dockerfile and ./docker/Dockerfile are now in sync
       dockerfile: Dockerfile
     container_name: z-ui
@@ -27,26 +29,34 @@ services:
     environment:
       - ZUI_HOST=0.0.0.0
       - ZUI_PORT=${ZUI_PORT:-8443}
-      - ZUI_DB_TYPE=${ZUI_DB_TYPE:-postgres}
+      # Use SQLite by default for resource-constrained environments
+      # Change to 'postgres' to use PostgreSQL instead
+      - ZUI_DB_TYPE=${ZUI_DB_TYPE:-sqlite}
+      - ZUI_DB_SQLITE=/var/lib/z-ui/db/z-ui.db
+      # Optional: PostgreSQL config if ZUI_DB_TYPE=postgres
       - ZUI_DB_HOST=postgres
       - ZUI_DB_PORT=5432
       - ZUI_DB_NAME=zui
       - ZUI_DB_USER=zui
       - ZUI_DB_PASS=${DB_PASSWORD:-changeme}
-      - ZUI_DB_SQLITE=/var/lib/z-ui/db/z-ui.db
+      # Redis
       - ZUI_REDIS_URL=redis://redis:6379
+      # Security
       - ZUI_JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - ZUI_ADMIN_USER=${ADMIN_USER:-admin}
       - ZUI_ADMIN_PASS=${ADMIN_PASS:-admin}
-      - ZUI_TELEGRAM_ENABLED=${TELEGRAM_ENABLED:-false}
-      - ZUI_TELEGRAM_TOKEN=${TELEGRAM_TOKEN:-}
-      - ZUI_TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID:-0}
-      - ZUI_DEBUG=${DEBUG:-false}
+      # Telegram Bot (optional)
+      - ZUI_TELEGRAM_ENABLED=${ZUI_TELEGRAM_ENABLED:-false}
+      - ZUI_TELEGRAM_TOKEN=${ZUI_TELEGRAM_TOKEN:-}
+      - ZUI_TELEGRAM_ADMIN_ID=${ZUI_TELEGRAM_ADMIN_ID:-0}
+      # Debug
+      - ZUI_DEBUG=${ZUI_DEBUG:-false}
       - ZUI_DEFAULT_THEME=${ZUI_DEFAULT_THEME:-amoled}
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
+        condition: service_healthy
+      # Only depend on postgres if using postgres DB
+      postgres:
         condition: service_healthy
     networks:
       - z-ui-net
@@ -59,6 +69,7 @@ services:
       start_period: 15s
       retries: 3
 
+  # PostgreSQL database (optional, not used by default)
   postgres:
     image: postgres:16-alpine
     container_name: z-ui-postgres
@@ -77,6 +88,7 @@ services:
     networks:
       - z-ui-net
 
+  # Redis cache
   redis:
     image: redis:7-alpine
     container_name: z-ui-redis

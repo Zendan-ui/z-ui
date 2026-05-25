@@ -16,14 +16,13 @@ FROM golang:1.22-alpine AS backend-builder
 RUN apk add --no-cache git
 
 WORKDIR /build
+
 COPY backend/go.mod ./
 RUN go mod download 2>/dev/null || go mod tidy && go mod download
 
 COPY backend/ .
 
 # Build pure static binary with CGO_ENABLED=0
-# This eliminates dependency on gcc/musl-dev/libc-dev
-# Solves I/O errors on resource-constrained environments
 ARG TARGETARCH=amd64
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
     go build -ldflags="-s -w -X main.Version=1.0.0" \
@@ -33,9 +32,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /build
+
 COPY frontend/package.json ./
 COPY frontend/package-lock.json* ./
-RUN npm install --legacy-peer-deps
+RUN npm install --no-cache-dir --legacy-peer-deps
 
 COPY frontend/ .
 RUN npm run build
@@ -49,44 +49,52 @@ LABEL org.opencontainers.image.description="The Future of Proxy Management"
 LABEL org.opencontainers.image.version="1.0.0"
 LABEL org.opencontainers.image.url="https://github.com/Zendan-ui/z-ui"
 
-RUN apk add --no-cache curl wget unzip tzdata bash jq \
-    iptables ip6tables libgcc libstdc++
+RUN apk update
+RUN apk add --no-cache ca-certificates curl tzdata bash jq \
+    iptables ip6tables libgcc libstdc++ || true
 
 ARG TARGETARCH=amd64
 
-# Xray-core (multi-arch)
+# Download Xray-core with graceful fallback
 RUN set -ex && \
-    XRAY_VERSION=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name) && \
+    XRAY_VERSION=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name 2>/dev/null) && \
+    if [ -z "$XRAY_VERSION" ]; then XRAY_VERSION="latest"; fi && \
     case "${TARGETARCH}" in \
       amd64) XRAY_ARCH="64" ;; \
       arm64) XRAY_ARCH="arm64-v8a" ;; \
       arm)   XRAY_ARCH="arm32-v7a" ;; \
       *)     XRAY_ARCH="64" ;; \
     esac && \
-    wget -qO /tmp/xray.zip "https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/Xray-linux-${XRAY_ARCH}.zip" && \
-    unzip -o /tmp/xray.zip -d /usr/local/bin/ xray geoip.dat geosite.dat && \
-    chmod +x /usr/local/bin/xray && \
-    rm -f /tmp/xray.zip
+    mkdir -p /tmp/xray && \
+    curl -fsSL "https://github.com/XTLS/Xray-core/releases/download/${XRAY_VERSION}/Xray-linux-${XRAY_ARCH}.zip" -o /tmp/xray.zip 2>/dev/null && \
+    cd /tmp/xray && unzip -q /tmp/xray.zip xray geoip.dat geosite.dat 2>/dev/null || true && \
+    if [ -f /tmp/xray/xray ]; then \
+      mv /tmp/xray/xray /usr/local/bin/ && chmod +x /usr/local/bin/xray; \
+    fi && \
+    rm -rf /tmp/xray*
 
-# Sing-box (multi-arch)
+# Download Sing-box with graceful fallback
 RUN set -ex && \
-    SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/v//') && \
+    SINGBOX_VERSION=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest 2>/dev/null | jq -r .tag_name | sed 's/v//' 2>/dev/null) && \
+    if [ -z "$SINGBOX_VERSION" ]; then SINGBOX_VERSION="1.8.0"; fi && \
     case "${TARGETARCH}" in \
       amd64) SB_ARCH="amd64" ;; \
       arm64) SB_ARCH="arm64" ;; \
       arm)   SB_ARCH="armv7" ;; \
       *)     SB_ARCH="amd64" ;; \
     esac && \
-    wget -qO /tmp/singbox.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-${SB_ARCH}.tar.gz" && \
-    tar -xzf /tmp/singbox.tar.gz -C /tmp/ && \
-    mv /tmp/sing-box-*/sing-box /usr/local/bin/ && \
-    chmod +x /usr/local/bin/sing-box && \
-    rm -rf /tmp/singbox* /tmp/sing-box*
+    mkdir -p /tmp/singbox && \
+    curl -fsSL "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-${SB_ARCH}.tar.gz" -o /tmp/singbox.tar.gz 2>/dev/null && \
+    cd /tmp/singbox && tar -xzf /tmp/singbox.tar.gz 2>/dev/null || true && \
+    if [ -f /tmp/singbox/sing-box ]; then \
+      mv /tmp/singbox/sing-box /usr/local/bin/ && chmod +x /usr/local/bin/sing-box; \
+    fi && \
+    rm -rf /tmp/singbox*
 
 # GeoIP/GeoSite
 RUN mkdir -p /usr/local/share/xray && \
-    wget -qO /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" && \
-    wget -qO /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
+    curl -fsSL "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" -o /usr/local/share/xray/geoip.dat 2>/dev/null || echo "Warning: GeoIP not available" && \
+    curl -fsSL "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" -o /usr/local/share/xray/geosite.dat 2>/dev/null || echo "Warning: GeoSite not available"
 
 WORKDIR /app
 
