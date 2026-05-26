@@ -5,10 +5,10 @@
         <div class="text-overline zui-kicker">Z-UI Exclusive</div>
         <div class="text-h4 font-weight-black mb-2">Advanced operator workspace</div>
         <div class="text-body-2 text-medium-emphasis mb-5">
-          A more refined control layer with custom glyphs, command palette, 4 themes, 4 languages and a cleaner operations-first surface.
+          A more refined control layer with custom glyphs, mission control, multiple themes and a cleaner operations-first surface.
         </div>
         <div class="d-flex flex-wrap ga-2">
-          <v-chip color="primary" variant="tonal">Command Palette</v-chip>
+          <v-chip color="primary" variant="tonal">Live Clock</v-chip>
           <v-chip color="secondary" variant="tonal">Custom Icon Set</v-chip>
           <v-chip color="success" variant="tonal">Launchpad</v-chip>
           <v-chip color="warning" variant="tonal">Workspace Dock</v-chip>

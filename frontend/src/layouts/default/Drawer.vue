@@ -3,43 +3,49 @@
     :model-value="displayDrawer"
     :temporary="isMobile"
     :permanent="!isMobile"
+    :scrim="isMobile"
+    :touchless="false"
     width="284"
     class="zui-drawer"
     @update:model-value="handleDrawerUpdate"
   >
     <div class="pa-3">
       <v-sheet rounded="xl" class="zui-drawer-brand pa-3">
-        <div class="d-flex align-center ga-3">
-          <v-avatar size="42" class="zui-drawer-avatar">
-            <img src="@/assets/logo.svg" alt="Z-UI" />
-          </v-avatar>
-          <div>
-            <div class="font-weight-bold">Z-UI</div>
-            <div class="text-caption text-medium-emphasis">Exclusive Operator Interface</div>
+        <div class="d-flex align-center justify-space-between ga-3">
+          <div class="d-flex align-center ga-3 min-w-0">
+            <v-avatar size="42" class="zui-drawer-avatar">
+              <img src="@/assets/logo.svg" alt="Z-UI" />
+            </v-avatar>
+            <div>
+              <div class="font-weight-bold">Z-UI</div>
+              <div class="text-caption text-medium-emphasis">Exclusive Operator Interface</div>
+            </div>
           </div>
+          <v-btn v-if="isMobile" icon size="small" variant="text" @click="emit('toggleDrawer')">
+            <v-icon icon="mdi-close" />
+          </v-btn>
         </div>
       </v-sheet>
     </div>
 
     <v-list density="compact" nav class="px-2">
       <v-list-item
-        link
-        rounded="xl"
-        class="mb-1"
         v-for="item in menu"
         :key="item.title"
         :to="item.path"
-        :active="router.currentRoute.value.path == item.path"
-        @click="isMobile ? emit('toggleDrawer') : null"
+        :active="router.currentRoute.value.path === item.path"
+        rounded="xl"
+        class="mb-1"
+        @click="onItemClick"
       >
-        <template v-slot:prepend>
+        <template #prepend>
           <div class="zui-drawer-glyph"><ZuiGlyph :name="item.icon" :size="18" /></div>
         </template>
-        <v-list-item-title v-text="$t(item.title)"></v-list-item-title>
+        <v-list-item-title>{{ $t(item.title) }}</v-list-item-title>
       </v-list-item>
     </v-list>
 
-    <template v-slot:append>
+    <template #append>
       <div class="pa-3">
         <v-sheet rounded="xl" class="zui-drawer-footer pa-2">
           <v-list-item rounded="xl" @click="Logout">
@@ -81,7 +87,14 @@ const handleDrawerUpdate = (value: boolean) => {
   if (props.isMobile && value !== props.displayDrawer) emit('toggleDrawer')
 }
 
-const Logout = async () => logout()
+const onItemClick = () => {
+  if (props.isMobile) emit('toggleDrawer')
+}
+
+const Logout = async () => {
+  if (props.isMobile) emit('toggleDrawer')
+  await logout()
+}
 </script>
 
 <style scoped>

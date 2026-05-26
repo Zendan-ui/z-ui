@@ -1,32 +1,32 @@
 <template>
-  <v-app-bar flat class="zui-app-bar" height="76">
+  <v-app-bar flat class="zui-app-bar" :class="{ mobile: isMobile }" height="72">
     <v-btn v-if="isMobile" icon variant="text" @click="emit('toggleDrawer')">
       <v-icon icon="mdi-menu" />
     </v-btn>
     <span v-else style="width: 12px"></span>
 
-    <div class="d-flex align-center ga-3 zui-app-brand">
-      <v-avatar size="42" class="zui-avatar">
+    <div class="d-flex align-center ga-3 zui-app-brand min-w-0">
+      <v-avatar size="40" class="zui-avatar">
         <img src="@/assets/logo.svg" alt="Z-UI" />
       </v-avatar>
       <div class="d-flex align-center ga-3 min-w-0">
         <div class="zui-route-glyph d-none d-sm-grid">
           <ZuiGlyph :name="routeGlyph" :size="18" />
         </div>
-        <div>
-          <div class="zui-brand-title">Z-UI</div>
-          <div class="zui-brand-subtitle">{{ $t(<string>route.name) }}</div>
+        <div class="min-w-0">
+          <div class="zui-brand-title text-truncate">Z-UI</div>
+          <div class="zui-brand-subtitle text-truncate">{{ $t(<string>route.name) }}</div>
         </div>
       </div>
     </div>
 
     <v-spacer />
 
-    <v-chip size="small" color="primary" variant="tonal" class="me-2 d-none d-lg-inline-flex">
-      Custom Icons · Mission Control · 6 Themes
+    <v-chip v-if="!isMobile" size="small" color="primary" variant="tonal" class="me-2 d-none d-lg-inline-flex">
+      Mission Control · 6 Themes
     </v-chip>
 
-    <v-chip size="small" variant="tonal" class="me-2 zui-clock-chip d-none d-md-inline-flex">
+    <v-chip size="small" variant="tonal" class="me-2 zui-clock-chip">
       {{ now }}
     </v-chip>
 
@@ -36,7 +36,7 @@
     </v-btn>
 
     <v-menu location="bottom end">
-      <template v-slot:activator="{ props }">
+      <template #activator="{ props }">
         <v-btn icon v-bind="props" variant="text">
           <v-icon>mdi-translate</v-icon>
         </v-btn>
@@ -63,7 +63,7 @@
     </v-menu>
 
     <v-menu location="bottom end">
-      <template v-slot:activator="{ props }">
+      <template #activator="{ props }">
         <v-btn icon v-bind="props" variant="text">
           <v-icon>mdi-palette-outline</v-icon>
         </v-btn>
@@ -161,6 +161,9 @@ const openRadar = () => window.dispatchEvent(new Event('zui:open-radar'))
   background: rgba(var(--v-theme-surface), .78) !important;
   backdrop-filter: blur(18px);
 }
+.zui-app-bar.mobile {
+  margin-inline-start: 14px;
+}
 .zui-app-brand {
   min-width: 0;
 }
@@ -188,6 +191,7 @@ const openRadar = () => window.dispatchEvent(new Event('zui:open-radar'))
 .zui-clock-chip {
   min-width: 84px;
   justify-content: center;
+  font-variant-numeric: tabular-nums;
 }
 .zui-menu-card {
   background: rgba(var(--v-theme-surface), .9) !important;

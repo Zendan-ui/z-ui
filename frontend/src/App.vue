@@ -37,9 +37,7 @@ const { locale } = useI18n()
 const radarOpen = ref(false)
 
 const themeName = computed(() => String(theme.global.name.value))
-const openRadar = () => {
-  radarOpen.value = true
-}
+const openRadar = () => { radarOpen.value = true }
 const handleRadar = () => openRadar()
 
 onMounted(() => {
@@ -75,7 +73,7 @@ body {
 .zui-root {
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   color: rgb(var(--v-theme-on-surface));
 }
 

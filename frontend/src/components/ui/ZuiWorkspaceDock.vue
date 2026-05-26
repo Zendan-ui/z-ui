@@ -3,11 +3,11 @@
     <div class="zui-dock-pill primary">
       <span>{{ now }}</span>
     </div>
-    <div class="zui-dock-pill">
+    <div class="zui-dock-pill d-none d-sm-inline-flex">
       <ZuiGlyph name="spark" :size="16" />
       <span>{{ themeLabel }}</span>
     </div>
-    <div class="zui-dock-pill d-none d-sm-inline-flex">
+    <div class="zui-dock-pill d-none d-md-inline-flex">
       <ZuiGlyph name="admins" :size="16" />
       <span>{{ languageLabel }}</span>
     </div>
@@ -38,9 +38,9 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
 <style scoped>
 .zui-dock {
   position: fixed;
-  right: 18px;
-  bottom: 18px;
-  z-index: 20;
+  inset-inline-end: 14px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 15;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -50,6 +50,7 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
   background: rgba(var(--v-theme-surface), .82);
   backdrop-filter: blur(18px);
   box-shadow: 0 18px 44px rgba(0,0,0,.18);
+  pointer-events: none;
 }
 .zui-dock-pill {
   height: 42px;
@@ -60,6 +61,7 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
   gap: 8px;
   background: rgba(var(--v-theme-surface-variant), .58);
   font-size: .84rem;
+  pointer-events: auto;
 }
 .zui-dock-pill.primary {
   background: linear-gradient(135deg, rgba(var(--v-theme-primary), .26), rgba(var(--v-theme-secondary), .18));
@@ -68,8 +70,13 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
 }
 @media (max-width: 960px) {
   .zui-dock {
-    right: 12px;
-    bottom: 12px;
+    inset-inline-end: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .zui-dock-pill {
+    height: 38px;
+    padding: 0 12px;
+    font-size: .78rem;
   }
 }
 </style>
