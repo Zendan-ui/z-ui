@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 set -euo pipefail
 
 APP_DIR="/opt/z-ui"
@@ -12,51 +11,93 @@ warn(){ echo -e " ${Y}[!]${N} $*"; }
 err() { echo -e " ${R}[-]${N} $*"; }
 need_root() { [[ ${EUID:-0} -eq 0 ]] || { err "Please run as root"; exit 1; }; }
 
+# Strip CR and surrounding whitespace
+sanitize() {
+  local s="$1"
+  s="${s//$'\r'/}"
+  s="${s##[[:space:]]}"
+  s="${s%%[[:space:]]}"
+  printf '%s' "$s"
+}
+
+# Escape for double-quoted YAML scalar
+yaml_quote() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  printf '"%s"' "$s"
+}
+
 install_docker() {
-  if command -v docker >/dev/null 2>&1; then ok "Docker already installed"; else msg "Installing Docker..."; curl -fsSL https://get.docker.com | sh; systemctl enable --now docker >/dev/null 2>&1 || true; ok "Docker installed"; fi
+  if command -v docker >/dev/null 2>&1; then
+    ok "Docker already installed"
+  else
+    msg "Installing Docker..."
+    curl -fsSL https://get.docker.com | sh
+    systemctl enable --now docker >/dev/null 2>&1 || true
+    ok "Docker installed"
+  fi
   docker compose version >/dev/null 2>&1 || { err "Docker Compose plugin is required"; exit 1; }
 }
 
 ask_value() {
   local prompt="$1" default="$2" var
-  read -rp "$(echo -e " ${W}${prompt}${N} [${default}]: ")" var
+  read -rp "$(echo -e " ${W}${prompt}${N} [${default}]: ")" var </dev/tty
+  var=$(sanitize "$var")
   echo "${var:-$default}"
 }
 
 ask_secret() {
   local prompt="$1" generated var
   generated=$(openssl rand -base64 12 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 14)
-  read -rsp "$(echo -e " ${W}${prompt}${N} [auto-generate]: ")" var; echo ""
+  read -rsp "$(echo -e " ${W}${prompt}${N} [auto-generate]: ")" var </dev/tty; echo ""
+  var=$(sanitize "$var")
   echo "${var:-$generated}"
 }
 
 write_compose() {
   local admin_user="$1" admin_pass="$2" panel_port="$3" sub_port="$4"
   mkdir -p "$APP_DIR" "$APP_DIR/db" "$APP_DIR/cert"
+
+  local q_image q_user q_pass q_panel q_sub q_app
+  q_image=$(yaml_quote "$IMAGE")
+  q_user=$(yaml_quote "$admin_user")
+  q_pass=$(yaml_quote "$admin_pass")
+  q_panel=$(yaml_quote "$panel_port")
+  q_sub=$(yaml_quote "$sub_port")
+  q_app="$APP_DIR"
+
   cat > "$COMPOSE_FILE" <<COMPOSE
 services:
   z-ui:
-    image: ${IMAGE}
+    image: ${q_image}
     container_name: z-ui
     hostname: z-ui
     restart: unless-stopped
     network_mode: host
     environment:
-      TZ: Asia/Tehran
-      ZUI_DB_FOLDER: /app/db
-      ZUI_ADMIN_USER: ${admin_user}
-      ZUI_ADMIN_PASS: ${admin_pass}
-      ZUI_PANEL_PORT: ${panel_port}
-      ZUI_PANEL_PATH: /app/
-      ZUI_SUB_PORT: ${sub_port}
-      ZUI_SUB_PATH: /sub/
+      TZ: "Asia/Tehran"
+      ZUI_DB_FOLDER: "/app/db"
+      ZUI_ADMIN_USER: ${q_user}
+      ZUI_ADMIN_PASS: ${q_pass}
+      ZUI_PANEL_PORT: ${q_panel}
+      ZUI_PANEL_PATH: "/app/"
+      ZUI_SUB_PORT: ${q_sub}
+      ZUI_SUB_PATH: "/sub/"
     volumes:
-      - ${APP_DIR}/db:/app/db
-      - ${APP_DIR}/cert:/app/cert
+      - ${q_app}/db:/app/db
+      - ${q_app}/cert:/app/cert
     cap_add:
       - NET_ADMIN
 COMPOSE
   ok "Docker compose file created at ${COMPOSE_FILE}"
+
+  # Validate YAML before pulling
+  if ! docker compose -f "$COMPOSE_FILE" config >/dev/null 2>/tmp/zui-compose.err; then
+    err "Generated compose file is invalid:"
+    cat /tmp/zui-compose.err
+    exit 1
+  fi
 }
 
 start_stack() {
@@ -114,15 +155,16 @@ case "${1:-help}" in
   start) compose up -d ;;
   stop) compose down ;;
   restart) compose restart ;;
-  status) compose ps ; echo ""; panel_uri ;;
+  status) compose ps ; echo "" ; panel_uri ;;
   logs) compose logs -f --tail "${2:-100}" ;;
   update) compose pull && compose up -d --force-recreate ;;
-  info) echo "Z-UI access URLs:"; panel_uri ;;
+  info) echo "Z-UI access URLs:" ; panel_uri ;;
   admin)
     case "${2:-}" in
       show) exec_in './z-ui admin -show' ;;
       set)
-        user="${3:-}"; pass="${4:-}"; [[ -n "$user" && -n "$pass" ]] || { echo "Usage: z-ui admin set <username> <password>"; exit 1; }
+        user="${3:-}"; pass="${4:-}"
+        [[ -n "$user" && -n "$pass" ]] || { echo "Usage: z-ui admin set <username> <password>"; exit 1; }
         exec_in "./z-ui admin -username '$user' -password '$pass'" ;;
       *) echo "Usage: z-ui admin {show|set <username> <password>}" ;;
     esac ;;
@@ -135,17 +177,9 @@ case "${1:-help}" in
   uninstall) compose down || true; rm -rf "$APP_DIR"; rm -f /usr/local/bin/z-ui; echo "Z-UI removed." ;;
   help|*)
     echo "Z-UI helper"
-    echo "  z-ui start"
-    echo "  z-ui stop"
-    echo "  z-ui restart"
-    echo "  z-ui status"
-    echo "  z-ui logs [n]"
-    echo "  z-ui update"
-    echo "  z-ui info"
-    echo "  z-ui admin show"
-    echo "  z-ui admin set <username> <password>"
-    echo "  z-ui setting show"
-    echo "  z-ui setting set-port <port>"
+    echo "  z-ui start|stop|restart|status|logs|update|info"
+    echo "  z-ui admin show | z-ui admin set <username> <password>"
+    echo "  z-ui setting show | z-ui setting set-port <port>"
     echo "  z-ui uninstall"
     ;;
 esac
@@ -174,12 +208,12 @@ show_result() {
 
 main() {
   need_root
-  echo ""; echo -e "${C}Z-UI Installer${N}"; echo -e "${C}Modern proxy panel with 4 themes and 4 languages${N}"; echo ""
+  echo ""; echo -e "${C}Z-UI Installer (patched)${N}"; echo ""
   local admin_user admin_pass panel_port sub_port
-  admin_user=$(ask_value "Admin username" "admin")
+  admin_user=$(ask_value  "Admin username"    "admin")
   admin_pass=$(ask_secret "Admin password")
-  panel_port=$(ask_value "Panel port" "2095")
-  sub_port=$(ask_value "Subscription port" "2096")
+  panel_port=$(ask_value  "Panel port"        "2095")
+  sub_port=$(ask_value    "Subscription port" "2096")
   install_docker
   write_compose "$admin_user" "$admin_pass" "$panel_port" "$sub_port"
   start_stack
@@ -191,5 +225,5 @@ main() {
 
 case "${1:-install}" in
   install) main ;;
-  *) echo "Usage: sudo bash scripts/install.sh install" ; exit 1 ;;
+  *) echo "Usage: sudo bash install-z-ui-fixed.sh install" ; exit 1 ;;
 esac
