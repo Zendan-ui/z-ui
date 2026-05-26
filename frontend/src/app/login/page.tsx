@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { applyTheme('midnight'); }, []);
+  useEffect(() => { applyTheme('blue'); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +37,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: 'var(--bg-0)' }}>
       <div className="absolute inset-0">
         <div className="absolute rounded-full blur-[120px] opacity-[.07]" style={{ width: 500, height: 500, background: 'var(--accent-1)', top: '15%', left: '25%', animation: 'float-bg 20s infinite' }} />
-        <div className="absolute rounded-full blur-[120px] opacity-[.07]" style={{ width: 500, height: 500, background: 'var(--accent-2)', bottom: '15%', right: '25%', animation: 'float-bg 20s infinite 5s' }} />
+        <div className="absolute rounded-full blur-[120px] opacity-[.07]" style={{ width: 500, height: 500, background: 'var(--accent-2)', bottom: '15%', right: '25%', animation: 'float-bg 20s infinite' }} />
       </div>
 
       <div className="relative w-full max-w-md px-4 animate-in">
@@ -59,7 +59,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-6">
           <svg viewBox="0 0 400 400" className="w-16 h-16 mx-auto mb-3">
-            <defs><linearGradient id="lG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--accent-1)"/><stop offset="100%" stopColor="var(--accent-2)"/></linearGradient><filter id="gl"><feGaussianBlur stdDeviation="10" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+            <defs><linearGradient id="lG" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="var(--accent-1)"/><stop offset="100%" stopColor="var(--accent-2)"/></linearGradient><filter id="gl"><feGaussianBlur in="SourceGraphic" stdDeviation="3" /></filter></defs>
             <circle cx="200" cy="200" r="185" fill="var(--bg-0)" stroke="url(#lG)" strokeWidth="5"/>
             <g filter="url(#gl)"><path d="M120 130L280 130L120 270L280 270" fill="none" stroke="url(#lG)" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/></g>
           </svg>
