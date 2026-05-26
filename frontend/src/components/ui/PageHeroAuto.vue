@@ -15,14 +15,14 @@
         <v-chip color="primary" variant="tonal" size="small">{{ activeThemeLabel }}</v-chip>
         <v-chip color="secondary" variant="tonal" size="small">{{ activeLanguageLabel }}</v-chip>
         <v-chip color="success" variant="tonal" size="small">Exclusive UI</v-chip>
-        <v-chip color="warning" variant="tonal" size="small">Ctrl+K</v-chip>
+        <v-chip color="warning" variant="tonal" size="small">{{ now }}</v-chip>
       </div>
     </div>
   </v-sheet>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useTheme } from 'vuetify'
@@ -31,6 +31,13 @@ import ZuiGlyph from './ZuiGlyph.vue'
 const route = useRoute()
 const { t, locale } = useI18n()
 const theme = useTheme()
+const clock = ref(new Date())
+let timer: number | undefined
+
+onMounted(() => {
+  timer = window.setInterval(() => { clock.value = new Date() }, 1000)
+})
+onBeforeUnmount(() => timer && clearInterval(timer))
 
 const pageKey = computed(() => String(route.name || 'pages.home'))
 const pageTitle = computed(() => t(pageKey.value))
@@ -70,6 +77,7 @@ const activeLanguageLabel = computed(() => {
   const map: Record<string, string> = { en: 'English', fa: 'فارسی', ru: 'Русский', ar: 'العربية' }
   return map[String(locale.value)] || String(locale.value)
 })
+const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
 </script>
 
 <style scoped>

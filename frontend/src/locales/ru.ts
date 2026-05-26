@@ -34,6 +34,8 @@ export default {
   theme: {
     midnight: "Неоновая ночь",
     aurora: "Аврора",
+    black: "Чистый чёрный",
+    white: "Чистый белый",
     graphite: "Графит Pro",
     pearl: "Жемчужный свет",
   },

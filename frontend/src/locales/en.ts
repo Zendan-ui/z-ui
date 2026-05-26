@@ -34,6 +34,8 @@ export default {
   theme: {
     midnight: "Midnight Neon",
     aurora: "Aurora Flux",
+    black: "Pure Black",
+    white: "Pure White",
     graphite: "Graphite Pro",
     pearl: "Pearl Light",
   },

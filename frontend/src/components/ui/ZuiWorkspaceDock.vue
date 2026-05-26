@@ -1,8 +1,8 @@
 <template>
   <div class="zui-dock">
-    <button class="zui-dock-btn primary" @click="$emit('open-command')" title="Command Palette (Ctrl+K)">
-      <ZuiGlyph name="command" :size="18" />
-    </button>
+    <div class="zui-dock-pill primary">
+      <span>{{ now }}</span>
+    </div>
     <div class="zui-dock-pill">
       <ZuiGlyph name="spark" :size="16" />
       <span>{{ themeLabel }}</span>
@@ -10,9 +10,6 @@
     <div class="zui-dock-pill d-none d-sm-inline-flex">
       <ZuiGlyph name="admins" :size="16" />
       <span>{{ languageLabel }}</span>
-    </div>
-    <div class="zui-dock-pill d-none d-md-inline-flex">
-      <span>{{ now }}</span>
     </div>
   </div>
 </template>
@@ -54,20 +51,6 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
   backdrop-filter: blur(18px);
   box-shadow: 0 18px 44px rgba(0,0,0,.18);
 }
-.zui-dock-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  border: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(var(--v-theme-surface-variant), .8);
-  color: inherit;
-  cursor: pointer;
-}
-.zui-dock-btn.primary {
-  background: linear-gradient(135deg, rgba(var(--v-theme-primary), .26), rgba(var(--v-theme-secondary), .18));
-}
 .zui-dock-pill {
   height: 42px;
   padding: 0 14px;
@@ -77,6 +60,11 @@ const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit',
   gap: 8px;
   background: rgba(var(--v-theme-surface-variant), .58);
   font-size: .84rem;
+}
+.zui-dock-pill.primary {
+  background: linear-gradient(135deg, rgba(var(--v-theme-primary), .26), rgba(var(--v-theme-secondary), .18));
+  min-width: 84px;
+  justify-content: center;
 }
 @media (max-width: 960px) {
   .zui-dock {

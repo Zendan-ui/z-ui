@@ -152,4 +152,4 @@ z-ui uninstall
 
 ---
 
-<p align="center">MIT License</p>
+<p align="center">GPLv3 License</p>

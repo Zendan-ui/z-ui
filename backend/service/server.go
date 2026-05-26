@@ -160,12 +160,41 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	info["appMem"] = rtm.Sys
 	info["appThreads"] = uint32(runtime.NumGoroutine())
 	cpuInfo, err := cpu.Info()
-	if err == nil {
+	if err == nil && len(cpuInfo) > 0 {
 		info["cpuType"] = cpuInfo[0].ModelName
+		info["cpuMHz"] = cpuInfo[0].Mhz
 	}
 	info["cpuCount"] = runtime.NumCPU()
 	info["hostName"], _ = os.Hostname()
 	info["appVersion"] = config.GetVersion()
+	info["goVersion"] = runtime.Version()
+	info["arch"] = runtime.GOARCH
+	info["os"] = runtime.GOOS
+	if hostInfo, err := host.Info(); err == nil {
+		info["platform"] = hostInfo.Platform
+		info["platformVersion"] = hostInfo.PlatformVersion
+		info["kernelVersion"] = hostInfo.KernelVersion
+		info["kernelArch"] = hostInfo.KernelArch
+		info["virtualizationSystem"] = hostInfo.VirtualizationSystem
+		info["virtualizationRole"] = hostInfo.VirtualizationRole
+		info["bootTime"] = hostInfo.BootTime
+		info["uptime"] = hostInfo.Uptime
+	}
+	if memInfo, err := mem.VirtualMemory(); err == nil {
+		info["memTotal"] = memInfo.Total
+		info["memUsed"] = memInfo.Used
+		info["memUsedPercent"] = memInfo.UsedPercent
+	}
+	if swapInfo, err := mem.SwapMemory(); err == nil {
+		info["swapTotal"] = swapInfo.Total
+		info["swapUsed"] = swapInfo.Used
+		info["swapUsedPercent"] = swapInfo.UsedPercent
+	}
+	if diskInfo, err := disk.Usage("/"); err == nil {
+		info["diskTotal"] = diskInfo.Total
+		info["diskUsed"] = diskInfo.Used
+		info["diskUsedPercent"] = diskInfo.UsedPercent
+	}
 	ipv4 := make([]string, 0)
 	ipv6 := make([]string, 0)
 	// get ip address
@@ -177,7 +206,7 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 			for _, address := range addrs {
 				if strings.Contains(address.Addr, ".") {
 					ipv4 = append(ipv4, address.Addr)
-				} else if address.Addr[0:6] != "fe80::" {
+				} else if len(address.Addr) >= 6 && address.Addr[0:6] != "fe80::" {
 					ipv6 = append(ipv6, address.Addr)
 				}
 			}
@@ -185,7 +214,9 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 	}
 	info["ipv4"] = ipv4
 	info["ipv6"] = ipv6
-	info["bootTime"], _ = host.BootTime()
+	if _, ok := info["bootTime"]; !ok {
+		info["bootTime"], _ = host.BootTime()
+	}
 
 	return info
 }

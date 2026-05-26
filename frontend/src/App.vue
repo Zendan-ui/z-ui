@@ -15,16 +15,18 @@
     </v-overlay>
     <Message />
     <router-view />
-    <ZuiCommandPalette ref="palette" />
-    <ZuiWorkspaceDock @open-command="openPalette" />
+    <v-dialog v-model="radarOpen" max-width="980">
+      <ZuiRiskRadar />
+    </v-dialog>
+    <ZuiWorkspaceDock />
   </div>
 </template>
 
 <script lang="ts" setup>
 import Message from '@/components/message.vue'
-import ZuiCommandPalette from '@/components/ui/ZuiCommandPalette.vue'
 import ZuiWorkspaceDock from '@/components/ui/ZuiWorkspaceDock.vue'
-import { computed, inject, ref, Ref, watchEffect } from 'vue'
+import ZuiRiskRadar from '@/components/ui/ZuiRiskRadar.vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, Ref, watchEffect } from 'vue'
 import { useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { isRtlLocale } from '@/locales'
@@ -32,12 +34,20 @@ import { isRtlLocale } from '@/locales'
 const loading: Ref<boolean> = inject('loading') ?? ref(false)
 const theme = useTheme()
 const { locale } = useI18n()
-const palette = ref<InstanceType<typeof ZuiCommandPalette> | null>(null)
+const radarOpen = ref(false)
 
 const themeName = computed(() => String(theme.global.name.value))
-const openPalette = () => {
-  if (palette.value && typeof palette.value.show === 'function') palette.value.show()
+const openRadar = () => {
+  radarOpen.value = true
 }
+const handleRadar = () => openRadar()
+
+onMounted(() => {
+  window.addEventListener('zui:open-radar', handleRadar)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('zui:open-radar', handleRadar)
+})
 
 watchEffect(() => {
   document.title = `Z-UI • ${document.location.hostname}`

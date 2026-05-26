@@ -8,6 +8,8 @@ export default {
   theme: {
     midnight: 'ليلة نيون',
     aurora: 'أورورا',
+    black: 'أسود خالص',
+    white: 'أبيض خالص',
     graphite: 'غرافيت برو',
     pearl: 'لؤلؤي فاتح',
   },

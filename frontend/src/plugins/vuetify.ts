@@ -5,7 +5,7 @@ import { ar, fa, en, ru } from 'vuetify/locale'
 import { createVuetify } from 'vuetify'
 import type { UiTheme } from '@/config/ui'
 
-const defaultTheme = ((localStorage.getItem('theme') as UiTheme | null) ?? 'midnight')
+const defaultTheme = ((localStorage.getItem('theme') as UiTheme | null) ?? 'black')
 
 export default createVuetify({
   defaults: {
@@ -75,6 +75,38 @@ export default createVuetify({
           success: '#32d583',
           warning: '#fac515',
           error: '#ff6b6b',
+        },
+      },
+      black: {
+        dark: true,
+        colors: {
+          primary: '#f5f5f5',
+          secondary: '#8b9bb4',
+          accent: '#4f46e5',
+          background: '#020202',
+          surface: '#0a0a0a',
+          'surface-variant': '#111111',
+          'on-surface': '#f5f5f5',
+          info: '#60a5fa',
+          success: '#22c55e',
+          warning: '#f59e0b',
+          error: '#ef4444',
+        },
+      },
+      white: {
+        dark: false,
+        colors: {
+          primary: '#111827',
+          secondary: '#475569',
+          accent: '#4f46e5',
+          background: '#ffffff',
+          surface: '#fbfbfc',
+          'surface-variant': '#f1f5f9',
+          'on-surface': '#111827',
+          info: '#0284c7',
+          success: '#16a34a',
+          warning: '#d97706',
+          error: '#dc2626',
         },
       },
       graphite: {

@@ -11,7 +11,9 @@
 
 <style scoped>
 .zui-main {
-  margin: 96px 14px 14px 14px;
+  margin-top: 96px;
+  margin-inline: 14px;
+  margin-inline-start: 312px;
 }
 .zui-main-wrap {
   min-height: calc(100vh - 124px);

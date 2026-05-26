@@ -257,7 +257,7 @@ const defaultValues: Record<OutType, Outbound> = {
   hysteria2: { type: OutTypes.Hysteria2, tls: { enabled: true } },
   anytls: { type: OutTypes.AnyTls, tls: { enabled: true } },
   tor: { type: OutTypes.Tor, executable_path: './tor', data_directory: '$HOME/.cache/tor', torrc: { ClientOnly: '1' } },
-  ssh: { type: OutTypes.SSH },
+  ssh: { type: OutTypes.SSH, server_port: 22, client_version: 'SSH-2.0-OpenSSH_9.7' },
   selector: { type: OutTypes.Selector },
   urltest: { type: OutTypes.URLTest },
 }

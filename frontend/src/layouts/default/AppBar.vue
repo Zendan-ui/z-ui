@@ -1,6 +1,6 @@
 <template>
   <v-app-bar flat class="zui-app-bar" height="76">
-    <v-btn v-if="isMobile" icon variant="text" @click="$emit('toggleDrawer')">
+    <v-btn v-if="isMobile" icon variant="text" @click="emit('toggleDrawer')">
       <v-icon icon="mdi-menu" />
     </v-btn>
     <span v-else style="width: 12px"></span>
@@ -23,16 +23,16 @@
     <v-spacer />
 
     <v-chip size="small" color="primary" variant="tonal" class="me-2 d-none d-lg-inline-flex">
-      Custom Icons · Command Palette · Mission Control
+      Custom Icons · Mission Control · 6 Themes
     </v-chip>
 
-    <v-btn class="me-1" variant="tonal" color="warning" @click="radarOpen = true">
+    <v-chip size="small" variant="tonal" class="me-2 zui-clock-chip d-none d-md-inline-flex">
+      {{ now }}
+    </v-chip>
+
+    <v-btn class="me-1" variant="tonal" color="warning" @click="openRadar">
       <ZuiGlyph name="alert" :size="16" />
       <span class="ms-2">{{ alertCount }}</span>
-    </v-btn>
-
-    <v-btn icon variant="text" class="me-1" @click="$emit('openCommand')" title="Command Palette (Ctrl+K)">
-      <ZuiGlyph name="command" :size="18" />
     </v-btn>
 
     <v-menu location="bottom end">
@@ -88,34 +88,37 @@
         </v-card-text>
       </v-card>
     </v-menu>
-    <v-dialog v-model="radarOpen" max-width="980">
-      <ZuiRiskRadar />
-    </v-dialog>
   </v-app-bar>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useLocale, useTheme } from 'vuetify'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { languages } from '@/locales'
 import { themeOptions } from '@/config/ui'
 import ZuiGlyph from '@/components/ui/ZuiGlyph.vue'
-import ZuiRiskRadar from '@/components/ui/ZuiRiskRadar.vue'
 import { useZuiRadar } from '@/composables/useZuiRadar'
 
-defineProps(['isMobile'])
-defineEmits(['toggleDrawer','openCommand'])
+const emit = defineEmits(['toggleDrawer'])
+defineProps<{ isMobile: boolean }>()
 
 const route = useRoute()
 const { locale: i18nLocale } = useI18n()
 const vuetifyLocale = useLocale()
 const theme = useTheme()
 const themes = themeOptions
-const radarOpen = ref(false)
 const { alertCount } = useZuiRadar()
+const clock = ref(new Date())
+let timer: number | undefined
 
+onMounted(() => {
+  timer = window.setInterval(() => { clock.value = new Date() }, 1000)
+})
+onBeforeUnmount(() => timer && clearInterval(timer))
+
+const now = computed(() => clock.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
 const routeGlyph = computed(() => ({
   'pages.home': 'home',
   'pages.inbounds': 'inbounds',
@@ -144,11 +147,15 @@ const changeTheme = (th: string) => {
   localStorage.setItem('theme', th)
 }
 const isActiveTheme = (th: string) => theme.global.name.value === th
+
+const openRadar = () => window.dispatchEvent(new Event('zui:open-radar'))
 </script>
 
 <style scoped>
 .zui-app-bar {
-  margin: 14px 14px 0;
+  margin-block-start: 14px;
+  margin-inline-start: 312px;
+  margin-inline-end: 14px;
   border-radius: 22px !important;
   border: 1px solid rgba(var(--v-theme-on-surface), .08);
   background: rgba(var(--v-theme-surface), .78) !important;
@@ -178,6 +185,10 @@ const isActiveTheme = (th: string) => theme.global.name.value === th
   opacity: .7;
   white-space: nowrap;
 }
+.zui-clock-chip {
+  min-width: 84px;
+  justify-content: center;
+}
 .zui-menu-card {
   background: rgba(var(--v-theme-surface), .9) !important;
   backdrop-filter: blur(18px);
@@ -188,5 +199,10 @@ const isActiveTheme = (th: string) => theme.global.name.value === th
   border-radius: 999px;
   display: inline-block;
   box-shadow: 0 0 0 4px rgba(255,255,255,.05);
+}
+@media (max-width: 960px) {
+  .zui-app-bar {
+    margin-inline-start: 14px;
+  }
 }
 </style>

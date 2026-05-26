@@ -34,6 +34,8 @@ export default {
   theme: {
     midnight: "نیمه‌شب نئونی",
     aurora: "شفق قطبی",
+    black: "سیاه خالص",
+    white: "سفید خالص",
     graphite: "گرافیت حرفه‌ای",
     pearl: "مرواریدی روشن",
   },
