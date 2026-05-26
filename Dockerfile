@@ -1,49 +1,56 @@
-FROM golang:1.24-alpine AS backend
-RUN apk add --no-cache git gcc musl-dev
-WORKDIR /src
-COPY backend/ .
-RUN go mod tidy && CGO_ENABLED=1 go build -tags "musl" -ldflags="-s -w" -o /z-ui ./cmd/server
-
-FROM node:20-alpine AS frontend
-WORKDIR /src
-COPY frontend/package.json ./
-RUN npm install --legacy-peer-deps 2>/dev/null || npm install
-COPY frontend/ .
+FROM --platform=$BUILDPLATFORM node:20-alpine AS frontend-builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
 RUN npm run build
 
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS backend-builder
+WORKDIR /app/backend
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV CGO_ENABLED=1
+ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
+ENV GOARCH=$TARGETARCH
+ENV CC=gcc
+
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libc-dev \
+    make \
+    git \
+    wget \
+    unzip \
+    bash \
+    curl
+
+RUN CRONET_ARCH="${TARGETARCH}" && \
+    CRONET_URL="https://github.com/SagerNet/cronet-go/releases/latest/download/libcronet-linux-${CRONET_ARCH}.so" && \
+    echo "Downloading ${CRONET_URL}" && \
+    wget -q -O /app/libcronet.so "${CRONET_URL}" && \
+    chmod 755 /app/libcronet.so
+
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ ./
+COPY --from=frontend-builder /app/frontend/dist/ /app/backend/web/html/
+
+RUN if [ "$TARGETARCH" = "arm" ]; then export GOARM=7; [ "$TARGETVARIANT" = "v6" ] && export GOARM=6; fi; \
+    go build -ldflags="-w -s" \
+    -tags "with_quic,with_grpc,with_utls,with_acme,with_gvisor,with_naive_outbound,with_purego,with_tailscale" \
+    -o /app/z-ui ./main.go
+
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates curl wget unzip bash jq iptables libgcc
-
-RUN set -ex; VER=$(curl -s https://api.github.com/repos/XTLS/Xray-core/releases/latest | jq -r .tag_name); \
-    wget -qO /tmp/x.zip "https://github.com/XTLS/Xray-core/releases/download/${VER}/Xray-linux-64.zip"; \
-    unzip -o /tmp/x.zip -d /usr/local/bin/ xray geoip.dat geosite.dat 2>/dev/null; \
-    chmod +x /usr/local/bin/xray 2>/dev/null; rm -f /tmp/x.zip; true
-
-RUN set -ex; VER=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/v//'); \
-    wget -qO /tmp/sb.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${VER}/sing-box-${VER}-linux-amd64.tar.gz"; \
-    tar -xzf /tmp/sb.tar.gz -C /tmp/ 2>/dev/null; mv /tmp/sing-box-*/sing-box /usr/local/bin/ 2>/dev/null; \
-    chmod +x /usr/local/bin/sing-box 2>/dev/null; rm -rf /tmp/sb* /tmp/sing-box*; true
-
-RUN mkdir -p /usr/local/share/xray; \
-    wget -qO /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" 2>/dev/null; \
-    wget -qO /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" 2>/dev/null; true
-
+LABEL org.opencontainers.image.title="Z-UI"
+LABEL org.opencontainers.image.description="Z-UI runtime image"
 WORKDIR /app
-COPY --from=backend /z-ui .
-COPY --from=frontend /src/out ./frontend/out/
-COPY configs/ ./configs/
-COPY scripts/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh; mkdir -p /var/lib/z-ui/{db,xray,singbox,certs,backups,logs,geo}
-
-ENV ZUI_HOST=0.0.0.0 ZUI_PORT=8443 ZUI_DB_TYPE=sqlite \
-    ZUI_DB_SQLITE=/var/lib/z-ui/db/z-ui.db \
-    ZUI_XRAY_PATH=/usr/local/bin/xray \
-    ZUI_XRAY_CONFIG=/var/lib/z-ui/xray/config.json \
-    ZUI_XRAY_ASSETS=/usr/local/share/xray \
-    ZUI_XRAY_API_PORT=10085 ZUI_DEFAULT_THEME=midnight
-
-EXPOSE 8443
-VOLUME ["/var/lib/z-ui"]
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s CMD curl -sf http://127.0.0.1:${ZUI_PORT}/health || exit 1
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["./z-ui"]
+ENV TZ=Asia/Tehran \
+    ZUI_DB_FOLDER=/app/db
+RUN apk add --no-cache --upgrade bash tzdata ca-certificates nftables curl
+COPY --from=backend-builder /app/z-ui /app/libcronet.so /app/
+COPY backend/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh && mkdir -p /app/db /app/cert
+EXPOSE 2095 2096
+VOLUME ["/app/db", "/app/cert"]
+ENTRYPOINT ["./entrypoint.sh"]

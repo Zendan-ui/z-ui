@@ -17,101 +17,139 @@
 ## نصب
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Zendan-ui/z-ui/main/scripts/install.sh)" -- install
 ```
 
-هنگام نصب، نام کاربری، رمز عبور و پورت پنل از شما پرسیده می‌شود. بعد از نصب:
+نصاب به‌صورت خودکار این کارها را انجام می‌دهد:
+- نصب Docker در صورت نیاز
+- دریافت آخرین ایمیج Z-UI
+- ساخت مسیرهای اجرایی در `/opt/z-ui`
+- پرسیدن نام کاربری و رمز ادمین
+- تنظیم پورت پنل و پورت سابسکریپشن
+- نصب دستور مدیریتی `z-ui`
+
+آدرس پیش‌فرض بعد از نصب:
 
 ```
-z-ui status         وضعیت سرور
-z-ui ping           تست اتصال
-z-ui logs           مشاهده لاگ
-z-ui port set 443   تغییر پورت
-z-ui admin create   ساخت ادمین
-z-ui config edit    ویرایش تنظیمات
-z-ui update         بروزرسانی
-z-ui backup         پشتیبان‌گیری
-z-ui help           راهنمای کامل
+http://SERVER_IP:2095/app/
 ```
 
-### امکانات
+فرمان‌های اصلی:
 
-- داشبورد مدیریتی با نمایش مصرف CPU، RAM و دیسک
-- مدیریت کاربران با ترافیک و تاریخ انقضا
-- ساخت اتوماتیک لینک اشتراک و QR Code
-- ساخت تونل مستقیم، معکوس و WARP
-- ربات تلگرام برای مدیریت از موبایل
-- ۴ تم: آبی تیره، سبز تیره، سیاه خالص، روشن نرم
-- ۳ زبان: فارسی، انگلیسی، روسی
+```
+z-ui start
+z-ui stop
+z-ui restart
+z-ui status
+z-ui logs
+z-ui update
+z-ui info
+z-ui admin show
+z-ui admin set <username> <password>
+z-ui setting show
+z-ui setting set-port <port>
+z-ui uninstall
+```
+
+مسیرها:
+- Runtime: `/opt/z-ui`
+- Database: `/opt/z-ui/db`
+- Certificates: `/opt/z-ui/cert`
+
+راهنمای کامل‌تر نصب در `docs/INSTALL.md` قرار دارد.
 
 ---
 
 ## Install
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Zendan-ui/z-ui/main/scripts/install.sh)" -- install
 ```
 
-During installation, you will be asked for admin username, password, and panel port. After installation:
+The installer will automatically:
+- install Docker if needed
+- pull the latest Z-UI image
+- create the runtime directory under `/opt/z-ui`
+- ask for admin username and password
+- configure panel and subscription ports
+- install the `z-ui` helper command
+
+Default access URL after installation:
 
 ```
-z-ui status         Server status
-z-ui ping           Test connectivity
-z-ui logs           View logs
-z-ui port set 443   Change port
-z-ui admin create   Create admin
-z-ui config edit    Edit settings
-z-ui update         Update panel
-z-ui backup         Create backup
-z-ui help           Show all commands
+http://SERVER_IP:2095/app/
 ```
 
-### Features
+Main commands:
 
-- Dashboard with real-time CPU, RAM, and disk monitoring
-- User management with traffic limits and expiry dates
-- Automatic subscription links and QR code generation
-- Direct, reverse, and WARP tunnel support
-- Telegram bot for mobile management
-- 4 themes: Blue Dark, Green Dark, Pure Black, Soft Light
-- 3 languages: English, Persian, Russian
+```
+z-ui start
+z-ui stop
+z-ui restart
+z-ui status
+z-ui logs
+z-ui update
+z-ui info
+z-ui admin show
+z-ui admin set <username> <password>
+z-ui setting show
+z-ui setting set-port <port>
+z-ui uninstall
+```
+
+Paths:
+- Runtime: `/opt/z-ui`
+- Database: `/opt/z-ui/db`
+- Certificates: `/opt/z-ui/cert`
+
+See `docs/INSTALL.md` for the full installation guide.
 
 ---
 
 ## Установка
 
 ```bash
-sudo bash -c "$(curl -sL https://github.com/Zendan-ui/z-ui/raw/main/scripts/install.sh)" @ install
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Zendan-ui/z-ui/main/scripts/install.sh)" -- install
 ```
 
-При установке вас попросят ввести имя администратора, пароль и порт панели. После установки:
+Установщик автоматически:
+- установит Docker при необходимости
+- скачает последний образ Z-UI
+- создаст рабочую директорию `/opt/z-ui`
+- запросит логин и пароль администратора
+- настроит порт панели и подписки
+- установит управляющую команду `z-ui`
+
+Стандартный адрес после установки:
 
 ```
-z-ui status         Статус сервера
-z-ui ping           Тест соединения
-z-ui logs           Просмотр логов
-z-ui port set 443   Изменить порт
-z-ui admin create   Создать админа
-z-ui config edit    Редактировать настройки
-z-ui update         Обновить панель
-z-ui backup         Создать резервную копию
-z-ui help           Все команды
+http://SERVER_IP:2095/app/
 ```
 
-### Возможности
+Основные команды:
 
-- Панель с мониторингом CPU, RAM и диска в реальном времени
-- Управление пользователями с лимитами трафика и сроком действия
-- Автоматическая генерация ссылок подписки и QR-кодов
-- Поддержка прямых, обратных и WARP-туннелей
-- Телеграм-бот для управления с телефона
-- 4 темы: Синяя тёмная, Зелёная тёмная, Чёрная, Светлая мягкая
-- 3 языка: Английский, Персидский, Русский
+```
+z-ui start
+z-ui stop
+z-ui restart
+z-ui status
+z-ui logs
+z-ui update
+z-ui info
+z-ui admin show
+z-ui admin set <username> <password>
+z-ui setting show
+z-ui setting set-port <port>
+z-ui uninstall
+```
+
+Пути:
+- Runtime: `/opt/z-ui`
+- Database: `/opt/z-ui/db`
+- Certificates: `/opt/z-ui/cert`
+
+Подробная инструкция находится в `docs/INSTALL.md`.
 
 ---
-
-<p align="center">
-  <a href="https://github.com/Zendan-ui/z-ui">GitHub</a> · <a href="https://t.me/Zendan_Ui">Telegram</a>
-</p>
 
 <p align="center">MIT License</p>

@@ -2,10 +2,11 @@ services:
   z-ui:
     image: ghcr.io/zendan-ui/z-ui:latest
     container_name: z-ui
+    hostname: "z-ui"
     restart: unless-stopped
     network_mode: host
-    env_file: .env
     volumes:
-      - /var/lib/z-ui:/var/lib/z-ui
+      - ./db:/app/db
+      - ./cert:/app/cert
     cap_add:
       - NET_ADMIN
