@@ -2,6 +2,8 @@ package app
 
 import (
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/Zendan-ui/z-ui/backend/config"
 	"github.com/Zendan-ui/z-ui/backend/core"
@@ -29,6 +31,43 @@ func NewApp() *APP {
 	return &APP{}
 }
 
+func (a *APP) applyBootstrapFromEnv() error {
+	adminUser := os.Getenv("ZUI_ADMIN_USER")
+	adminPass := os.Getenv("ZUI_ADMIN_PASS")
+	if adminUser != "" && adminPass != "" {
+		userService := service.UserService{}
+		if err := userService.UpdateFirstUser(adminUser, adminPass); err != nil {
+			return err
+		}
+	}
+
+	if portStr := os.Getenv("ZUI_PANEL_PORT"); portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil && port > 0 {
+			if err := a.SettingService.SetPort(port); err != nil {
+				return err
+			}
+		}
+	}
+	if path := os.Getenv("ZUI_PANEL_PATH"); path != "" {
+		if err := a.SettingService.SetWebPath(path); err != nil {
+			return err
+		}
+	}
+	if portStr := os.Getenv("ZUI_SUB_PORT"); portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil && port > 0 {
+			if err := a.SettingService.SetSubPort(port); err != nil {
+				return err
+			}
+		}
+	}
+	if path := os.Getenv("ZUI_SUB_PATH"); path != "" {
+		if err := a.SettingService.SetSubPath(path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (a *APP) Init() error {
 	log.Printf("%v %v", config.GetName(), config.GetVersion())
 
@@ -41,6 +80,11 @@ func (a *APP) Init() error {
 
 	// Init Setting
 	a.SettingService.GetAllSetting()
+
+	err = a.applyBootstrapFromEnv()
+	if err != nil {
+		return err
+	}
 
 	a.core = core.NewCore()
 

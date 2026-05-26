@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <InboundVue 
-    v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :inTags="inTags"
@@ -9,7 +8,6 @@
     @close="closeModal"
   />
   <Stats
-    v-model="stats.visible"
     :visible="stats.visible"
     :resource="stats.resource"
     :tag="stats.tag"

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog transition="dialog-bottom-transition" width="800" :model-value="visible">
+  <v-dialog transition="dialog-bottom-transition" width="800" :model-value="visible" @update:model-value="!$event && $emit('close')">
     <v-card class="rounded-lg">
       <v-card-title>
         {{ $t('actions.addbulk') }} {{ $t('objects.outbound') }}

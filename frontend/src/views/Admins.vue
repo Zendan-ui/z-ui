@@ -1,21 +1,18 @@
 <template>
   <PageHeroAuto />
   <AdminModal 
-    v-model="editModal.visible"
     :visible="editModal.visible"
     :user="editModal.user"
     @close="closeEditModal"
     @save="saveEditModal"
   />
   <ChangeModal 
-    v-model="changesModal.visible"
     :visible="changesModal.visible"
     :admins="users.map((u:any) => u.username)"
     :actor="changesModal.actor"
     @close="closeChangesModal"
   />
   <TokenModal 
-    v-model="tokenModal.visible"
     :visible="tokenModal.visible"
     @close="closeTokenModal"
   />

@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <DnsVue
-    v-model="dnsModal.visible"
     :visible="dnsModal.visible"
     :index="dnsModal.index"
     :data="dnsModal.data"
@@ -11,7 +10,6 @@
     @save="saveDnsModal"
   />
   <DnsRuleVue
-    v-model="dnsRuleModal.visible"
     :visible="dnsRuleModal.visible"
     :index="dnsRuleModal.index"
     :data="dnsRuleModal.data"

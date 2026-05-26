@@ -6,25 +6,14 @@ IMAGE="ghcr.io/zendan-ui/z-ui:latest"
 COMPOSE_FILE="$APP_DIR/docker-compose.yml"
 
 R='\033[0;31m'; G='\033[0;32m'; Y='\033[1;33m'; C='\033[0;36m'; W='\033[1;37m'; N='\033[0m'
-
 msg() { echo -e " ${C}[*]${N} $*"; }
 ok()  { echo -e " ${G}[+]${N} $*"; }
 warn(){ echo -e " ${Y}[!]${N} $*"; }
 err() { echo -e " ${R}[-]${N} $*"; }
-
-need_root() {
-  [[ ${EUID:-0} -eq 0 ]] || { err "Please run as root"; exit 1; }
-}
+need_root() { [[ ${EUID:-0} -eq 0 ]] || { err "Please run as root"; exit 1; }; }
 
 install_docker() {
-  if command -v docker >/dev/null 2>&1; then
-    ok "Docker already installed"
-  else
-    msg "Installing Docker..."
-    curl -fsSL https://get.docker.com | sh
-    systemctl enable --now docker >/dev/null 2>&1 || true
-    ok "Docker installed"
-  fi
+  if command -v docker >/dev/null 2>&1; then ok "Docker already installed"; else msg "Installing Docker..."; curl -fsSL https://get.docker.com | sh; systemctl enable --now docker >/dev/null 2>&1 || true; ok "Docker installed"; fi
   docker compose version >/dev/null 2>&1 || { err "Docker Compose plugin is required"; exit 1; }
 }
 
@@ -35,13 +24,14 @@ ask_value() {
 }
 
 ask_secret() {
-  local prompt="$1" generated
+  local prompt="$1" generated var
   generated=$(openssl rand -base64 12 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 14)
   read -rsp "$(echo -e " ${W}${prompt}${N} [auto-generate]: ")" var; echo ""
   echo "${var:-$generated}"
 }
 
 write_compose() {
+  local admin_user="$1" admin_pass="$2" panel_port="$3" sub_port="$4"
   mkdir -p "$APP_DIR" "$APP_DIR/db" "$APP_DIR/cert"
   cat > "$COMPOSE_FILE" <<COMPOSE
 services:
@@ -53,6 +43,13 @@ services:
     network_mode: host
     environment:
       TZ: Asia/Tehran
+      ZUI_DB_FOLDER: /app/db
+      ZUI_ADMIN_USER: ${admin_user}
+      ZUI_ADMIN_PASS: ${admin_pass}
+      ZUI_PANEL_PORT: ${panel_port}
+      ZUI_PANEL_PATH: /app/
+      ZUI_SUB_PORT: ${sub_port}
+      ZUI_SUB_PATH: /sub/
     volumes:
       - ${APP_DIR}/db:/app/db
       - ${APP_DIR}/cert:/app/cert
@@ -67,13 +64,13 @@ start_stack() {
   msg "Pulling latest Z-UI image..."
   docker compose pull
   msg "Starting Z-UI container..."
-  docker compose up -d
+  docker compose up -d --force-recreate
   ok "Container started"
 }
 
 wait_container() {
   msg "Waiting for container startup..."
-  for _ in $(seq 1 30); do
+  for _ in $(seq 1 40); do
     if docker ps --filter 'name=^z-ui$' --format '{{.Status}}' | grep -q '^Up'; then
       sleep 2
       return 0
@@ -85,18 +82,22 @@ wait_container() {
   exit 1
 }
 
-configure_panel() {
-  local user="$1" pass="$2" panel_port="$3" sub_port="$4"
-  msg "Applying admin credentials and panel settings..."
-  local cmd="./z-ui admin -username '$user' -password '$pass' && ./z-ui setting -port $panel_port -path /app/ -subPort $sub_port -subPath /sub/"
+verify_admin() {
+  local user="$1" pass="$2"
+  msg "Verifying bootstrap admin credentials..."
   for _ in $(seq 1 20); do
-    if docker exec z-ui sh -lc "$cmd" >/dev/null 2>&1; then
-      ok "Panel configuration applied"
-      return 0
+    if docker exec z-ui ./z-ui admin -show >/tmp/zui-admin-show.txt 2>/dev/null; then
+      if grep -q "Username:.*${user}" /tmp/zui-admin-show.txt && grep -q "Password:.*${pass}" /tmp/zui-admin-show.txt; then
+        ok "Admin user verified"
+        rm -f /tmp/zui-admin-show.txt
+        return 0
+      fi
     fi
     sleep 2
   done
-  warn "Could not configure panel automatically. You can run it later with z-ui admin/set commands."
+  warn "Automatic verification failed. Current admin from container:"
+  docker exec z-ui ./z-ui admin -show || true
+  rm -f /tmp/zui-admin-show.txt
 }
 
 install_cli() {
@@ -107,10 +108,7 @@ APP_DIR="/opt/z-ui"
 cd "$APP_DIR"
 compose() { docker compose "$@"; }
 exec_in() { docker exec z-ui sh -lc "$*"; }
-server_ip() { curl -4s ifconfig.me 2>/dev/null || curl -4s icanhazip.com 2>/dev/null || hostname -I | awk '{print $1}'; }
-panel_uri() {
-  exec_in './z-ui uri' 2>/dev/null || true
-}
+panel_uri() { exec_in './z-ui uri' 2>/dev/null || true; }
 
 case "${1:-help}" in
   start) compose up -d ;;
@@ -118,38 +116,23 @@ case "${1:-help}" in
   restart) compose restart ;;
   status) compose ps ; echo ""; panel_uri ;;
   logs) compose logs -f --tail "${2:-100}" ;;
-  update) compose pull && compose up -d ;;
-  info)
-    echo "Z-UI access URLs:"
-    panel_uri
-    ;;
+  update) compose pull && compose up -d --force-recreate ;;
+  info) echo "Z-UI access URLs:"; panel_uri ;;
   admin)
     case "${2:-}" in
       show) exec_in './z-ui admin -show' ;;
       set)
-        user="${3:-}"; pass="${4:-}"
-        [[ -n "$user" && -n "$pass" ]] || { echo "Usage: z-ui admin set <username> <password>"; exit 1; }
-        exec_in "./z-ui admin -username '$user' -password '$pass'"
-        ;;
+        user="${3:-}"; pass="${4:-}"; [[ -n "$user" && -n "$pass" ]] || { echo "Usage: z-ui admin set <username> <password>"; exit 1; }
+        exec_in "./z-ui admin -username '$user' -password '$pass'" ;;
       *) echo "Usage: z-ui admin {show|set <username> <password>}" ;;
-    esac
-    ;;
+    esac ;;
   setting)
     case "${2:-}" in
       show) exec_in './z-ui setting -show' ;;
-      set-port)
-        port="${3:-}"; [[ -n "$port" ]] || { echo "Usage: z-ui setting set-port <port>"; exit 1; }
-        exec_in "./z-ui setting -port '$port'"
-        ;;
+      set-port) port="${3:-}"; [[ -n "$port" ]] || { echo "Usage: z-ui setting set-port <port>"; exit 1; }; exec_in "./z-ui setting -port '$port'" ;;
       *) echo "Usage: z-ui setting {show|set-port <port>}" ;;
-    esac
-    ;;
-  uninstall)
-    compose down || true
-    rm -rf "$APP_DIR"
-    rm -f /usr/local/bin/z-ui
-    echo "Z-UI removed."
-    ;;
+    esac ;;
+  uninstall) compose down || true; rm -rf "$APP_DIR"; rm -f /usr/local/bin/z-ui; echo "Z-UI removed." ;;
   help|*)
     echo "Z-UI helper"
     echo "  z-ui start"
@@ -191,22 +174,17 @@ show_result() {
 
 main() {
   need_root
-  echo ""
-  echo -e "${C}Z-UI Installer${N}"
-  echo -e "${C}Modern proxy panel with 4 themes and 4 languages${N}"
-  echo ""
-
+  echo ""; echo -e "${C}Z-UI Installer${N}"; echo -e "${C}Modern proxy panel with 4 themes and 4 languages${N}"; echo ""
   local admin_user admin_pass panel_port sub_port
   admin_user=$(ask_value "Admin username" "admin")
   admin_pass=$(ask_secret "Admin password")
   panel_port=$(ask_value "Panel port" "2095")
   sub_port=$(ask_value "Subscription port" "2096")
-
   install_docker
-  write_compose
+  write_compose "$admin_user" "$admin_pass" "$panel_port" "$sub_port"
   start_stack
   wait_container
-  configure_panel "$admin_user" "$admin_pass" "$panel_port" "$sub_port"
+  verify_admin "$admin_user" "$admin_pass"
   install_cli
   show_result "$admin_user" "$admin_pass" "$panel_port"
 }

@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <OutboundVue 
-    v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :data="modal.data"
@@ -9,13 +8,11 @@
     @close="closeModal"
   />
   <OutboundBulk
-    v-model="bulkModal.visible"
     :visible="bulkModal.visible"
     :outboundTags="outboundTags"
     @close="closeBulkModal"
   />
   <Stats
-    v-model="stats.visible"
     :visible="stats.visible"
     :resource="stats.resource"
     :tag="stats.tag"

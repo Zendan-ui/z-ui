@@ -1,5 +1,5 @@
 <template>
-  <v-dialog transition="dialog-bottom-transition" width="800">
+  <v-dialog :model-value="visible" @update:model-value="!$event && $emit('close')" transition="dialog-bottom-transition" width="92vw" max-width="800">
     <v-card class="rounded-lg" :loading="loading">
       <v-card-title>
         {{ $t('actions.' + title) + " " + $t('objects.client') }}

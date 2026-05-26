@@ -10,7 +10,9 @@
           <div class="d-flex flex-wrap align-center ga-2">
             <v-dialog v-model="menu" :close-on-content-click="false" transition="scale-transition" max-width="880">
               <template v-slot:activator="{ props }">
-                <v-btn v-bind="props" hide-details variant="tonal" elevation="0">{{ $t('main.tiles') }} <v-icon icon="mdi-star-plus" class="ms-2" /></v-btn>
+                <v-btn v-bind="props" hide-details variant="tonal" elevation="0">
+                  {{ $t('main.tiles') }} <v-icon icon="mdi-star-plus" class="ms-2" />
+                </v-btn>
               </template>
               <v-card rounded="xl">
                 <v-card-title>
@@ -46,7 +48,69 @@
           <div class="d-flex flex-wrap ga-2 justify-md-end">
             <v-chip color="primary" variant="tonal">{{ systemHealth }}</v-chip>
             <v-chip color="secondary" variant="tonal">{{ sysFacts.length }} Specs</v-chip>
+            <v-chip color="success" variant="tonal">{{ runtimeStatus }}</v-chip>
           </div>
+        </v-col>
+      </v-row>
+
+      <v-row class="mb-2">
+        <v-col cols="12" xl="7">
+          <v-card class="zui-performance-board rounded-xl" variant="outlined">
+            <v-card-title class="d-flex align-center justify-space-between flex-wrap ga-2">
+              <div>
+                <div class="text-overline zui-section-kicker">Performance Board</div>
+                <div class="text-h6 font-weight-bold">Live CPU · RAM · Disk · Network</div>
+              </div>
+              <v-btn size="small" variant="tonal" color="primary" @click="reloadSys()">
+                {{ $t('actions.update') }}
+              </v-btn>
+            </v-card-title>
+            <v-card-text>
+              <v-row>
+                <v-col cols="12" sm="6" v-for="card in perfCards" :key="card.key">
+                  <v-sheet class="zui-perf-card pa-4" rounded="xl">
+                    <div class="d-flex align-center justify-space-between mb-3 ga-3">
+                      <div class="d-flex align-center ga-3 min-w-0">
+                        <div class="zui-perf-icon">
+                          <v-icon :icon="card.icon" size="20"></v-icon>
+                        </div>
+                        <div class="min-w-0">
+                          <div class="text-caption text-medium-emphasis text-uppercase">{{ card.label }}</div>
+                          <div class="text-h5 font-weight-black text-truncate">{{ card.value }}</div>
+                        </div>
+                      </div>
+                      <v-chip :color="card.color" variant="tonal" size="small">{{ card.badge }}</v-chip>
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis mb-3">{{ card.subtitle }}</div>
+                    <v-progress-linear :model-value="card.percent" :color="card.color" rounded height="10"></v-progress-linear>
+                    <div class="d-flex justify-space-between mt-2 text-caption text-medium-emphasis">
+                      <span>{{ card.hintLeft }}</span>
+                      <span>{{ card.hintRight }}</span>
+                    </div>
+                  </v-sheet>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" xl="5">
+          <v-card class="rounded-xl zui-runtime-card" variant="outlined">
+            <v-card-title>
+              <div class="text-overline zui-section-kicker">System Snapshot</div>
+              <div class="text-h6 font-weight-bold">Professional runtime overview</div>
+            </v-card-title>
+            <v-card-text>
+              <v-row density="compact">
+                <v-col cols="12" sm="6" v-for="fact in quickFacts" :key="fact.label">
+                  <div class="zui-quick-row">
+                    <div class="zui-quick-label">{{ fact.label }}</div>
+                    <div class="zui-quick-value">{{ fact.value }}</div>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
         </v-col>
       </v-row>
 
@@ -152,11 +216,86 @@ const tilesData = ref<any>({})
 const reloadItems = computed({
   get() { return Data().reloadItems },
   set(v: string[]) {
-    if (Data().reloadItems.length === 0 && v.length > 0) startTimer()
-    if (Data().reloadItems.length > 0 && v.length === 0) stopTimer()
     Data().reloadItems = v
     v.length > 0 ? localStorage.setItem('reloadItems', v.join(',')) : localStorage.removeItem('reloadItems')
   },
+})
+
+const percent = (current?: number, total?: number) => {
+  if (!current || !total || total <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((current / total) * 100)))
+}
+
+const perfCards = computed(() => {
+  const sys = tilesData.value?.sys || {}
+  const net = tilesData.value?.net || {}
+  const cpuValue = Math.round(tilesData.value?.cpu || 0)
+  const memPct = percent(tilesData.value?.mem?.current, tilesData.value?.mem?.total)
+  const dskPct = percent(tilesData.value?.dsk?.current, tilesData.value?.dsk?.total)
+  return [
+    {
+      key: 'cpu',
+      label: 'CPU',
+      value: `${cpuValue}%`,
+      badge: `${sys.cpuCount || 0} core`,
+      subtitle: sys.cpuType || 'Processor load and real-time headroom',
+      percent: cpuValue,
+      color: cpuValue > 90 ? 'error' : cpuValue > 75 ? 'warning' : 'info',
+      icon: 'mdi-chip',
+      hintLeft: sys.cpuMHz ? `${Math.round(sys.cpuMHz)} MHz` : '-',
+      hintRight: sys.load1 ? `load ${sys.load1.toFixed(2)}` : 'live',
+    },
+    {
+      key: 'memory',
+      label: 'RAM',
+      value: tilesData.value?.mem?.total ? `${HumanReadable.sizeFormat(tilesData.value.mem.current || 0)} / ${HumanReadable.sizeFormat(tilesData.value.mem.total)}` : '-',
+      badge: `${memPct}%`,
+      subtitle: sys.appMem ? `App memory ${HumanReadable.sizeFormat(sys.appMem)}` : 'System memory usage',
+      percent: memPct,
+      color: memPct > 90 ? 'error' : memPct > 75 ? 'warning' : 'success',
+      icon: 'mdi-memory',
+      hintLeft: sys.swapTotal ? `Swap ${HumanReadable.sizeFormat(sys.swapUsed || 0)}` : 'swap -',
+      hintRight: sys.swapTotal ? `${Math.round(sys.swapUsedPercent || 0)}%` : '-',
+    },
+    {
+      key: 'disk',
+      label: 'Disk',
+      value: tilesData.value?.dsk?.total ? `${HumanReadable.sizeFormat(tilesData.value.dsk.current || 0)} / ${HumanReadable.sizeFormat(tilesData.value.dsk.total)}` : '-',
+      badge: `${dskPct}%`,
+      subtitle: 'Primary filesystem occupancy and safety margin',
+      percent: dskPct,
+      color: dskPct > 90 ? 'error' : dskPct > 75 ? 'warning' : 'secondary',
+      icon: 'mdi-harddisk',
+      hintLeft: sys.diskTotal ? `Total ${HumanReadable.sizeFormat(sys.diskTotal)}` : '-',
+      hintRight: dskPct > 0 ? `${dskPct}% used` : '-',
+    },
+    {
+      key: 'network',
+      label: 'Network',
+      value: net.recv || net.sent ? `${HumanReadable.sizeFormat(net.recv || 0)} ↓ / ${HumanReadable.sizeFormat(net.sent || 0)} ↑` : '-',
+      badge: `${Data().onlines.user?.length || 0} online`,
+      subtitle: 'Traffic counters plus active user visibility',
+      percent: Math.min(100, Math.max(Data().onlines.user?.length || 0, Data().onlines.inbound?.length || 0) * 8),
+      color: 'primary',
+      icon: 'mdi-access-point-network',
+      hintLeft: `${Data().onlines.inbound?.length || 0} in`,
+      hintRight: `${Data().onlines.outbound?.length || 0} out`,
+    },
+  ]
+})
+
+const quickFacts = computed(() => {
+  const sys = tilesData.value?.sys || {}
+  return [
+    { label: 'CPU Model', value: sys.cpuType || '-' },
+    { label: 'Hostname', value: sys.hostName || '-' },
+    { label: 'Go Runtime', value: sys.goVersion || '-' },
+    { label: 'Kernel', value: sys.kernelVersion || '-' },
+    { label: 'Boot Time', value: sys.bootTime ? new Date(sys.bootTime * 1000).toLocaleString(locale) : '-' },
+    { label: 'Uptime', value: sys.uptime ? HumanReadable.formatSecond(sys.uptime) : '-' },
+    { label: 'IPv4', value: sys.ipv4?.length ? sys.ipv4[0] : '-' },
+    { label: 'Load Avg', value: sys.load1 ? `${sys.load1.toFixed(2)} / ${Number(sys.load5 || 0).toFixed(2)} / ${Number(sys.load15 || 0).toFixed(2)}` : '-' },
+  ]
 })
 
 const isDetailCard = (type: string) => type === 'i-sys' || type === 'i-sbd'
@@ -173,6 +312,7 @@ const sysFacts = computed(() => {
     { label: 'CPU Model', value: sys.cpuType || '-' },
     { label: 'CPU Frequency', value: sys.cpuMHz ? `${Math.round(sys.cpuMHz)} MHz` : '-' },
     { label: 'CPU Threads', value: sys.cpuCount ? `${sys.cpuCount}` : '-' },
+    { label: 'Load Average', value: sys.load1 ? `${sys.load1.toFixed(2)} / ${Number(sys.load5 || 0).toFixed(2)} / ${Number(sys.load15 || 0).toFixed(2)}` : '-' },
     { label: 'RAM', value: sys.memTotal ? `${HumanReadable.sizeFormat(sys.memUsed || 0)} / ${HumanReadable.sizeFormat(sys.memTotal)}` : '-' },
     { label: 'Swap', value: sys.swapTotal ? `${HumanReadable.sizeFormat(sys.swapUsed || 0)} / ${HumanReadable.sizeFormat(sys.swapTotal)}` : '-' },
     { label: 'Disk /', value: sys.diskTotal ? `${HumanReadable.sizeFormat(sys.diskUsed || 0)} / ${HumanReadable.sizeFormat(sys.diskTotal)}` : '-' },
@@ -205,22 +345,24 @@ const systemHealth = computed(() => {
   if (!sys.memTotal || !sys.diskTotal) return 'Live Monitor'
   const memPct = sys.memTotal ? ((sys.memUsed || 0) / sys.memTotal) * 100 : 0
   const diskPct = sys.diskTotal ? ((sys.diskUsed || 0) / sys.diskTotal) * 100 : 0
-  if (memPct > 92 || diskPct > 92) return 'Attention Required'
-  if (memPct > 80 || diskPct > 80) return 'Watch State'
+  const cpuPct = Number(tilesData.value?.cpu || 0)
+  if (cpuPct > 92 || memPct > 92 || diskPct > 92) return 'Attention Required'
+  if (cpuPct > 80 || memPct > 80 || diskPct > 80) return 'Watch State'
   return 'Healthy'
 })
 
+const runtimeStatus = computed(() => tilesData.value?.sbd?.running ? 'Sing-box Online' : 'Sing-box Offline')
+
 const reloadData = async () => {
-  const request = [...new Set(reloadItems.value.map(r => r.split('-')[1]))]
+  const request = [...new Set(['cpu', 'mem', 'dsk', 'dio', 'net', 'sys', 'sbd', ...reloadItems.value.map(r => r.split('-')[1])])]
   const data = await HttpUtils.get('api/status', { r: request.join(',') })
   if (data.success) tilesData.value = data.obj
 }
 
 const reloadSys = async () => {
-  const data = await HttpUtils.get('api/status', { r: 'sys,sbd' })
+  const data = await HttpUtils.get('api/status', { r: 'cpu,mem,dsk,net,sys,sbd' })
   if (data.success) {
-    tilesData.value.sys = data.obj.sys
-    tilesData.value.sbd = data.obj.sbd
+    tilesData.value = { ...tilesData.value, ...data.obj }
   }
 }
 
@@ -230,10 +372,8 @@ const stopTimer = () => { if (intervalId) { clearInterval(intervalId); intervalI
 
 onMounted(async () => {
   loading.value = true
-  if (Data().reloadItems.length !== 0) {
-    await reloadData()
-    startTimer()
-  }
+  await reloadData()
+  startTimer()
   loading.value = false
 })
 
@@ -253,13 +393,29 @@ const restartSingbox = async () => {
 .zui-dashboard-actions {
   margin-inline: 0;
 }
+.zui-section-kicker {
+  letter-spacing: .14em;
+  opacity: .66;
+}
+.zui-performance-board,
+.zui-runtime-card,
 .zui-dashboard-card {
   background: linear-gradient(135deg, rgba(var(--v-theme-surface), .9), rgba(var(--v-theme-surface-variant), .62));
   border-color: rgba(var(--v-theme-on-surface), .08) !important;
 }
-.zui-dashboard-card--detail {
-  min-height: unset;
+.zui-perf-card {
+  background: rgba(var(--v-theme-surface-variant), .42);
+  border: 1px solid rgba(var(--v-theme-on-surface), .05);
 }
+.zui-perf-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(var(--v-theme-background), .45);
+}
+.zui-quick-row,
 .zui-spec-row {
   display: flex;
   flex-direction: column;
@@ -270,12 +426,14 @@ const restartSingbox = async () => {
   border: 1px solid rgba(var(--v-theme-on-surface), .05);
   margin-bottom: 10px;
 }
+.zui-quick-label,
 .zui-spec-label {
   font-size: .76rem;
   letter-spacing: .08em;
   text-transform: uppercase;
   opacity: .64;
 }
+.zui-quick-value,
 .zui-spec-value {
   font-weight: 600;
   line-height: 1.6;
@@ -283,5 +441,8 @@ const restartSingbox = async () => {
 }
 .zui-spec-value.multiline {
   font-size: .92rem;
+}
+.zui-dashboard-card--detail {
+  min-height: unset;
 }
 </style>

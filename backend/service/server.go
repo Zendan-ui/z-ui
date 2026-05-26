@@ -17,6 +17,7 @@ import (
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/load"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/net"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -179,6 +180,11 @@ func (s *ServerService) GetSystemInfo() map[string]interface{} {
 		info["virtualizationRole"] = hostInfo.VirtualizationRole
 		info["bootTime"] = hostInfo.BootTime
 		info["uptime"] = hostInfo.Uptime
+	}
+	if loadInfo, err := load.Avg(); err == nil {
+		info["load1"] = loadInfo.Load1
+		info["load5"] = loadInfo.Load5
+		info["load15"] = loadInfo.Load15
 	}
 	if memInfo, err := mem.VirtualMemory(); err == nil {
 		info["memTotal"] = memInfo.Total

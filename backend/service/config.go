@@ -235,7 +235,11 @@ func (s *ConfigService) Save(obj string, act string, data json.RawMessage, initU
 		copy(configData, data)
 		go func() { _ = s.restartCoreWithConfig(configData) }()
 	case "settings":
-		err = s.SettingService.Save(tx, data)
+		if act == "reset" {
+			err = s.SettingService.ResetSettings()
+		} else {
+			err = s.SettingService.Save(tx, data)
+		}
 	default:
 		return nil, common.NewError("unknown object: ", obj)
 	}

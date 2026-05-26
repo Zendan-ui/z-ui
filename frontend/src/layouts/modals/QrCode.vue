@@ -1,5 +1,5 @@
 <template>
-  <v-dialog transition="dialog-bottom-transition" width="400">
+  <v-dialog :model-value="visible" @update:model-value="!$event && $emit('close')" transition="dialog-bottom-transition" width="92vw" max-width="400">
     <v-card class="rounded-lg" id="qrcode-modal" :loading="loading">
       <v-card-title>
         <v-row>

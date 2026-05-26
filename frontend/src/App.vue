@@ -115,14 +115,19 @@ body {
   mask-image: radial-gradient(circle at center, black 35%, transparent 85%);
 }
 
-.v-overlay,
 .v-application,
 .v-main,
 .v-navigation-drawer,
-.v-app-bar,
-.v-dialog {
+.v-app-bar {
   position: relative;
   z-index: 1;
+}
+
+.v-overlay,
+.v-overlay__scrim,
+.v-overlay__content,
+.v-dialog > .v-overlay__content {
+  z-index: 2400 !important;
 }
 
 .v-card {

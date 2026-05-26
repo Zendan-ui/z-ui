@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <ServiceVue 
-    v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :data="modal.data"

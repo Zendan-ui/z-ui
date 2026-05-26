@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <RuleVue
-    v-model="ruleModal.visible"
     :visible="ruleModal.visible"
     :index="ruleModal.index"
     :data="ruleModal.data"
@@ -13,7 +12,6 @@
     @save="saveRuleModal"
   />
   <RulesetVue
-    v-model="rulesetModal.visible"
     :visible="rulesetModal.visible"
     :index="rulesetModal.index"
     :data="rulesetModal.data"
@@ -22,7 +20,6 @@
     @save="saveRulesetModal"
   />
   <RuleImport
-    v-model="importRulesModal.visible"
     :visible="importRulesModal.visible"
     :existingRulesCount="rules.length"
     :existingRulesetsCount="rulesets.length"
@@ -31,7 +28,6 @@
     @close="closeImportRule"
   />
   <RulesetImport
-    v-model="importRulesetsModal.visible"
     :visible="importRulesetsModal.visible"
     :outTags="outboundTags"
     :rsTags="rulesetTags"

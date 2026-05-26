@@ -2,7 +2,6 @@
 <template>
   <PageHeroAuto />
   <ClientModal 
-    v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :groups="groups"
@@ -10,27 +9,23 @@
     @close="closeModal"
   />
   <ClientAddBulk 
-    v-model="addBulkModal"
     :visible="addBulkModal"
     :groups="groups"
     :inboundTags="inboundTags"
     @close="closeAddBulk"
   />
   <ClientEditBulk 
-    v-model="editBulkModal"
     :visible="editBulkModal"
     :inboundTags="inboundTags"
     :clients="clients"
     @close="closeEditBulk"
   />
   <QrCode
-    v-model="qrcode.visible"
     :visible="qrcode.visible"
     :id="qrcode.id"
     @close="closeQrCode"
   />
   <Stats
-    v-model="stats.visible"
     :visible="stats.visible"
     :resource="stats.resource"
     :tag="stats.tag"

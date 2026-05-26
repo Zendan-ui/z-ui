@@ -69,6 +69,26 @@ var defaultValueMap = map[string]string{
 	"version":       config.GetVersion(),
 }
 
+func buildPreviewURL(host string, port string, isTLS bool, path string) string {
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	protocol := "http"
+	if isTLS {
+		protocol = "https"
+	}
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+	if port == "" || (protocol == "http" && port == "80") || (protocol == "https" && port == "443") {
+		return protocol + "://" + host + path
+	}
+	return protocol + "://" + host + ":" + port + path
+}
+
 type SettingService struct {
 }
 
@@ -95,10 +115,15 @@ func (s *SettingService) GetAllSetting() (*map[string]string, error) {
 		}
 	}
 
+	allSetting["version"] = config.GetVersion()
+	allSetting["webTLS"] = strconv.FormatBool(allSetting["webCertFile"] != "" || allSetting["webKeyFile"] != "")
+	allSetting["subTLS"] = strconv.FormatBool(allSetting["subCertFile"] != "" || allSetting["subKeyFile"] != "")
+	allSetting["panelPreviewURI"] = buildPreviewURL(allSetting["webDomain"], allSetting["webPort"], allSetting["webTLS"] == "true", allSetting["webPath"])
+	allSetting["subPreviewURI"] = buildPreviewURL(allSetting["subDomain"], allSetting["subPort"], allSetting["subTLS"] == "true", allSetting["subPath"])
+
 	// Due to security principles
 	delete(allSetting, "secret")
 	delete(allSetting, "config")
-	delete(allSetting, "version")
 
 	return &allSetting, nil
 }
@@ -370,6 +395,12 @@ func (s *SettingService) Save(tx *gorm.DB, data json.RawMessage) error {
 		return err
 	}
 	for key, obj := range settings {
+		if key == "version" || key == "panelPreviewURI" || key == "subPreviewURI" || key == "webTLS" || key == "subTLS" {
+			continue
+		}
+		if _, ok := defaultValueMap[key]; !ok && key != "webCertFile" && key != "webKeyFile" && key != "subCertFile" && key != "subKeyFile" {
+			continue
+		}
 		// Secure file existence check
 		if obj != "" && (key == "webCertFile" ||
 			key == "webKeyFile" ||

@@ -1,7 +1,6 @@
 <template>
   <PageHeroAuto />
   <EndpointVue 
-    v-model="modal.visible"
     :visible="modal.visible"
     :id="modal.id"
     :data="modal.data"
@@ -9,14 +8,12 @@
     @close="closeModal"
   />
   <Stats
-    v-model="stats.visible"
     :visible="stats.visible"
     :resource="stats.resource"
     :tag="stats.tag"
     @close="closeStats"
   />
   <QrCode
-    v-model="qrcode.visible"
     :visible="qrcode.visible"
     :data="qrcode.data"
     @close="closeQrCode"
